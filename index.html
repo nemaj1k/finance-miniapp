@@ -2,116 +2,206 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Мои финансы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --bg:var(--tg-theme-bg-color,#ffffff);
-  --tx:var(--tg-theme-text-color,#111111);
-  --hint:var(--tg-theme-hint-color,#8a8a8e);
-  --btn:var(--tg-theme-button-color,#2481cc);
-  --btntx:var(--tg-theme-button-text-color,#ffffff);
-  --sec:var(--tg-theme-secondary-bg-color,#f2f2f7);
-  --inc:#2ea44f;--exp:#e5484d;
+  --bg:#F4F5F7; --surface:#FFFFFF; --ink:#14161F; --hint:#636B7B; --line:#E6E8ED; --field:#ECEEF2; --seg-on:#FFFFFF;
+  --pos:#2B3BFF; --neg:#D63518; --green:#0B8F66; --hero:#2B3BFF;
+  --display:'Unbounded','Golos Text',system-ui,sans-serif;
+  --body:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0D0F14; --surface:#171A21; --ink:#F2F4F8; --hint:#98A0B1; --line:#252A34; --field:#1F232C; --seg-on:#2C313D;
+  --green:#3DDC9A;
+  color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:96px}
-.wrap{max-width:520px;margin:0 auto;padding:12px 16px}
-.month{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.month b{font-size:18px}
-.month button{background:var(--sec);border:0;color:var(--tx);width:40px;height:40px;border-radius:12px;font-size:20px}
-.card{background:var(--sec);border-radius:16px;padding:16px;margin-bottom:12px}
-.bal{font-size:32px;font-weight:700;margin:2px 0 12px}
-.row{display:flex;gap:12px}
-.row>div{flex:1}
-.lbl{color:var(--hint);font-size:13px}
-.inc{color:var(--inc);font-weight:600}.exp{color:var(--exp);font-weight:600}
-h3{margin:18px 4px 8px;font-size:15px;color:var(--hint);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.donut-wrap{display:flex;gap:16px;align-items:center}
-.donut{width:110px;height:110px;border-radius:50%;flex:none;position:relative}
-.donut::after{content:"";position:absolute;inset:26px;background:var(--sec);border-radius:50%}
-.legend{flex:1;font-size:14px}
-.legend div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
-.day{color:var(--hint);font-size:13px;margin:14px 4px 6px}
-.op{display:flex;align-items:center;gap:12px;background:var(--sec);border-radius:14px;padding:10px 12px;margin-bottom:6px}
-.ic{font-size:22px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:10px;flex:none}
-.op .m{flex:1;min-width:0}
-.op .m div:first-child{font-weight:500}
-.op .m .n{color:var(--hint);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.empty{text-align:center;color:var(--hint);padding:32px 0}
-.fab{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;border:0;background:var(--btn);color:var(--btntx);font-size:32px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:10}
-.sheet-bg.open{display:flex}
-.sheet{background:var(--bg);width:100%;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;padding:16px;max-height:92vh;overflow:auto}
-.seg{display:flex;background:var(--sec);border-radius:12px;padding:3px;margin-bottom:12px}
-.seg button{flex:1;border:0;background:transparent;color:var(--tx);padding:10px;border-radius:10px;font-size:15px}
-.seg button.on{background:var(--bg);font-weight:600}
-input{width:100%;background:var(--sec);border:0;color:var(--tx);border-radius:12px;padding:12px 14px;font-size:16px;margin-bottom:10px;outline:none}
-#amount{font-size:28px;font-weight:700}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-.chip{background:var(--sec);border:2px solid transparent;color:var(--tx);border-radius:12px;padding:8px 12px;font-size:14px}
-.chip.on{border-color:var(--btn)}
-.save{width:100%;border:0;background:var(--btn);color:var(--btntx);padding:14px;border-radius:14px;font-size:17px;font-weight:600}
-.save:disabled{opacity:.45}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--body);padding-bottom:calc(120px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #8FA0FF;outline-offset:2px}
+
+/* ---- Шапка с балансом: единственный яркий акцент, цвет зависит от знака баланса ---- */
+.hero{position:relative;overflow:hidden;background:var(--hero);color:#fff;padding:16px 20px 30px;border-radius:0 0 32px 32px;transition:background-color .5s ease}
+.hero :focus-visible{outline-color:#fff}
+.glyph{position:absolute;right:-30px;bottom:-70px;font:700 240px/1 var(--display);opacity:.1;pointer-events:none;user-select:none}
+.hero-in{position:relative;max-width:520px;margin:0 auto}
+.mnav{display:flex;align-items:center;justify-content:space-between}
+.mnav button{width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;color:#fff}
+.mnav button:active{background:rgba(255,255,255,.3)}
+.mlabel{font-weight:600;font-size:16px}
+.bl{margin-top:28px;font-size:14px}
+.bal{font-family:var(--display);font-weight:600;line-height:1.15;letter-spacing:-.02em;margin:6px 0 24px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bal .cur{font-size:.55em;margin-left:.18em}
+.flow{display:flex;gap:32px}
+.flow small{display:block;font-size:13px}
+.flow b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ---- Секции ---- */
+.block{max-width:520px;margin:0 auto;padding:28px 20px 0}
+h2{margin:0 0 14px;font-size:18px;font-weight:600}
+.bar{display:flex;gap:3px;height:16px}
+.bar i{display:block;min-width:6px;border-radius:6px}
+.legend{list-style:none;margin:14px 0 0;padding:0}
+.legend li{display:grid;grid-template-columns:12px 1fr auto 44px;align-items:center;gap:10px;padding:7px 0;font-size:15px}
+.sw{width:12px;height:12px;border-radius:4px}
+.lv{font-variant-numeric:tabular-nums}
+.lp{text-align:right;color:var(--hint);font-size:14px}
+
+.day{display:flex;justify-content:space-between;color:var(--hint);font-size:14px;margin:22px 4px 8px}
+.grp{background:var(--surface);border-radius:22px;overflow:hidden}
+.op{display:flex;width:100%;align-items:center;gap:14px;padding:12px 16px;border:0;background:transparent;text-align:left}
+.op+.op{border-top:1px solid var(--line)}
+.op:active{background:var(--field)}
+.ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex:none}
+.m{flex:1;min-width:0;display:block}
+.t{display:block;font-weight:500}
+.n{display:block;color:var(--hint);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.amt.inc{color:var(--green)}
+.foot{color:var(--hint);font-size:13px;text-align:center;margin:18px 0 0}
+.empty{text-align:center;padding:36px 12px 0}
+.empty p{margin:0}
+.empty .sub{color:var(--hint);margin-top:6px}
+
+/* ---- Кнопка добавления ---- */
+.add{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:56px;padding:0 26px 0 20px;border:0;border-radius:28px;background:var(--ink);color:var(--bg);font-weight:600;font-size:17px;box-shadow:0 10px 30px rgba(10,12,20,.28);z-index:5;transition:transform .12s}
+.add:active{transform:translateX(-50%) scale(.97)}
+
+/* ---- Форма добавления ---- */
+.sheet-bg{position:fixed;inset:0;background:rgba(8,10,16,.5);display:flex;align-items:flex-end;z-index:10;visibility:hidden;opacity:0;transition:opacity .2s,visibility .2s}
+.sheet-bg.open{visibility:visible;opacity:1}
+.sheet{width:100%;max-width:520px;margin:0 auto;background:var(--surface);border-radius:28px 28px 0 0;padding:12px 20px calc(20px + env(safe-area-inset-bottom));max-height:94vh;overflow:auto;transform:translateY(100%);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.sheet-bg.open .sheet{transform:none}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--field);border-radius:14px}
+.seg button{height:44px;border:0;border-radius:11px;background:transparent;color:var(--hint);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--seg-on);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.amount{position:relative;margin:20px 0 14px}
+.amount input{width:100%;border:0;border-bottom:2px solid var(--line);border-radius:0;background:transparent;padding:6px 44px 8px 0;font:600 40px/1.2 var(--display);outline:none}
+.amount input:focus{border-bottom-color:var(--ink)}
+.amount input::placeholder{color:var(--line)}
+.amount.inc input{color:var(--green)}
+.rub{position:absolute;right:0;bottom:12px;font:600 26px var(--display);color:var(--hint)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:14px;padding:9px 13px;background:var(--field);font-weight:500;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.fields{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-bottom:16px}
+.fields input{min-width:0;width:100%;border:0;border-radius:14px;background:var(--field);padding:13px 14px;outline:none}
+.save{width:100%;height:54px;border:0;border-radius:16px;background:var(--pos);color:#fff;font-weight:600;font-size:17px}
+.save:disabled{opacity:.4;cursor:default}
+
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:14px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="month">
-    <button id="prev">‹</button><b id="mlabel"></b><button id="next">›</button>
-  </div>
-  <div class="card">
-    <div class="lbl">Баланс за месяц</div>
-    <div class="bal" id="bal"></div>
-    <div class="row">
-      <div><div class="lbl">Доходы</div><div class="inc" id="inc"></div></div>
-      <div><div class="lbl">Расходы</div><div class="exp" id="exp"></div></div>
+
+<header class="hero" id="hero">
+  <div class="glyph" aria-hidden="true">₽</div>
+  <div class="hero-in">
+    <div class="mnav">
+      <button id="prev" aria-label="Предыдущий месяц"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="mlabel" id="mlabel" aria-live="polite"></div>
+      <button id="next" aria-label="Следующий месяц"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="bl">Баланс месяца</div>
+    <div class="bal" id="bal"><span id="balNum">0</span><span class="cur">₽</span></div>
+    <div class="flow">
+      <div><small>Доходы</small><b id="inc">+0&nbsp;₽</b></div>
+      <div><small>Расходы</small><b id="exp">−0&nbsp;₽</b></div>
     </div>
   </div>
-  <div id="stats"></div>
-  <div id="list"></div>
-</div>
+</header>
 
-<button class="fab" id="fab">+</button>
+<main>
+  <section class="block" id="stats" hidden></section>
+  <section class="block" id="list"></section>
+</main>
+
+<button class="add" id="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Добавить</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="sheet-bg" id="bg">
-  <div class="sheet">
-    <div class="seg"><button id="tE" class="on">Расход</button><button id="tI">Доход</button></div>
-    <input id="amount" type="text" inputmode="decimal" placeholder="0 ₽" autocomplete="off">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Новая операция">
+    <div class="grab"></div>
+    <div class="seg">
+      <button id="tE" aria-pressed="true">Расход</button>
+      <button id="tI" aria-pressed="false">Доход</button>
+    </div>
+    <div class="amount" id="amountBox">
+      <input id="amount" type="text" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Сумма">
+      <span class="rub">₽</span>
+    </div>
     <div class="chips" id="chips"></div>
-    <input id="date" type="date">
-    <input id="note" type="text" placeholder="Заметка (необязательно)" maxlength="60">
-    <button class="save" id="save" disabled>Добавить</button>
+    <div class="fields">
+      <input id="date" type="date" aria-label="Дата">
+      <input id="note" type="text" placeholder="Заметка" maxlength="60" aria-label="Заметка">
+    </div>
+    <button class="save" id="save" disabled>Добавить расход</button>
   </div>
 </div>
 
 <script>
 const tg = window.Telegram && Telegram.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
+const inTg = !!(tg && tg.initData);
+if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
 
 const CATS = {
   e: [['🛒','Продукты'],['🚌','Транспорт'],['🍔','Кафе'],['🏠','Жильё'],['🎮','Развлечения'],['👕','Одежда'],['💊','Здоровье'],['📚','Учёба'],['📦','Другое']],
   i: [['💼','Зарплата'],['🎓','Стипендия'],['💸','Подработка'],['🎁','Подарки'],['📦','Другое']]
 };
-const COLORS = ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f'];
+const EC = { 'Продукты':'#F59F00','Транспорт':'#4DABF7','Кафе':'#FA5252','Жильё':'#7950F2','Развлечения':'#E64980','Одежда':'#15AABF','Здоровье':'#40C057','Учёба':'#5C7CFA','Другое':'#868E96' };
+const POS = '#2B3BFF', NEG = '#D63518';
 
 let tx = [];
 let month = today().slice(0, 7);
 let type = 'e';
 let cat = null;
+let heroColor = POS;
 
 function today() { return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 const $ = id => document.getElementById(id);
-const fmt = n => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(n) + ' ₽';
+const nf = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+const num = n => nf.format(Math.abs(n));
+const rub = n => num(n) + ' ₽';
+const signed = n => (n < 0 ? '−' : n > 0 ? '+' : '') + rub(n);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sum = (l, t) => l.filter(x => x.t === t).reduce((s, x) => s + x.a, 0);
 const icon = (t, c) => (CATS[t].find(x => x[1] === c) || ['📦'])[0];
+const colorOf = (t, c) => t === 'i' ? '#12B886' : (EC[c] || '#868E96');
+const rgba = (h, a) => { const n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; };
 const buzz = k => { try { tg && tg.HapticFeedback.notificationOccurred(k); } catch (e) {} };
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- Тема и цвета оболочки Telegram ----------
+function paintChrome() {
+  if (!inTg) return;
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  try { tg.setHeaderColor(heroColor); } catch (e) {}
+  try { tg.setBackgroundColor(bg); } catch (e) {}
+  try { tg.setBottomBarColor(bg); } catch (e) {}
+}
+function applyTheme() {
+  const dark = inTg ? tg.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  paintChrome();
+}
+applyTheme();
+if (inTg) { try { tg.onEvent('themeChanged', applyTheme); } catch (e) {} }
+else { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); }
 
 // ---------- Хранилище: Telegram CloudStorage (по месяцам, кусками) + зеркало в localStorage ----------
-const cs = tg && tg.initData && tg.CloudStorage;
+const cs = inTg && tg.CloudStorage;
 const CH = 2500;
 const csGet = keys => new Promise(r => cs.getItems(keys, (e, v) => r(e ? {} : v || {})));
 const csSet = (k, v) => new Promise(r => cs.setItem(k, v, () => r()));
@@ -160,67 +250,108 @@ function monthLabel() {
   const s = new Date(y, m - 1, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }).replace(' г.', '');
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+function dayLabel(d) {
+  if (d === today()) return 'Сегодня';
+  const y = new Date(Date.now() - new Date().getTimezoneOffset() * 60000 - 864e5).toISOString().slice(0, 10);
+  if (d === y) return 'Вчера';
+  return new Date(d + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' });
+}
 
-function render() {
+// Баланс: число «докручивается» до нового значения при загрузке и смене месяца
+let shown = 0, raf = 0;
+function setBalance(target, animate) {
+  cancelAnimationFrame(raf);
+  const txt = (target < 0 ? '−' : '') + num(target);
+  const L = txt.length;
+  $('bal').style.fontSize = (L <= 6 ? 48 : L <= 8 ? 42 : L <= 10 ? 34 : L <= 12 ? 28 : 22) + 'px';
+  if (!animate || reduceMotion() || shown === target) { $('balNum').textContent = txt; shown = target; return; }
+  const from = shown, t0 = performance.now(), D = 600;
+  const step = now => {
+    const p = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - p, 3);
+    const v = from + (target - from) * e;
+    const val = p === 1 ? target : Math.round(v);
+    $('balNum').textContent = (val < 0 ? '−' : '') + num(val);
+    shown = p === 1 ? target : v;
+    if (p < 1) raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+function render(animate) {
   const list = tx.filter(t => t.d.startsWith(month)).sort((a, b) => b.d.localeCompare(a.d) || b.i - a.i);
-  const inc = sum(list, 'i'), exp = sum(list, 'e');
-  $('mlabel').textContent = monthLabel();
-  $('bal').textContent = fmt(inc - exp);
-  $('inc').textContent = '+' + fmt(inc);
-  $('exp').textContent = '−' + fmt(exp);
+  const inc = sum(list, 'i'), exp = sum(list, 'e'), bal = inc - exp;
 
-  // Статистика расходов по категориям
+  $('mlabel').textContent = monthLabel();
+  $('inc').textContent = '+' + rub(inc);
+  $('exp').textContent = '−' + rub(exp);
+  heroColor = bal < 0 ? NEG : POS;
+  document.documentElement.style.setProperty('--hero', heroColor);
+  paintChrome();
+  setBalance(bal, animate);
+
+  // Куда ушли деньги
   const by = {};
   list.filter(x => x.t === 'e').forEach(x => by[x.c] = (by[x.c] || 0) + x.a);
   const rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
+  const st = $('stats');
   if (rows.length) {
-    let acc = 0;
-    const stops = rows.map(([, v], i) => {
-      const from = acc / exp * 100; acc += v;
-      return COLORS[i % COLORS.length] + ' ' + from + '% ' + (acc / exp * 100) + '%';
-    });
-    $('stats').innerHTML = '<h3>Расходы по категориям</h3><div class="card donut-wrap"><div class="donut" style="background:conic-gradient(' + stops.join(',') + ')"></div><div class="legend">' +
-      rows.map(([c, v], i) => '<div><span><span class="dot" style="background:' + COLORS[i % COLORS.length] + '"></span>' + esc(c) + '</span><span>' + Math.round(v / exp * 100) + '%</span></div>').join('') + '</div></div>';
-  } else $('stats').innerHTML = '';
+    st.hidden = false;
+    st.innerHTML = '<h2>Куда ушло</h2><div class="bar" role="img" aria-label="Расходы по категориям">' +
+      rows.map(([c, v]) => '<i style="flex:' + v + ';background:' + colorOf('e', c) + '"></i>').join('') + '</div><ul class="legend">' +
+      rows.map(([c, v]) => {
+        const p = v / exp * 100;
+        return '<li><span class="sw" style="background:' + colorOf('e', c) + '"></span><span>' + esc(c) + '</span><span class="lv">' + rub(v) + '</span><span class="lp">' + (p < 1 ? '<1' : Math.round(p)) + '%</span></li>';
+      }).join('') + '</ul>';
+  } else { st.hidden = true; st.innerHTML = ''; }
 
-  // Список по дням
-  if (!list.length) { $('list').innerHTML = '<div class="empty">Операций пока нет.<br>Нажми «+», чтобы добавить.</div>'; return; }
-  let html = '<h3>Операции</h3>', last = '';
-  for (const x of list) {
-    if (x.d !== last) {
-      last = x.d;
-      const dt = new Date(x.d + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' });
-      html += '<div class="day">' + dt + '</div>';
-    }
-    html += '<div class="op" data-id="' + x.i + '"><div class="ic">' + icon(x.t, x.c) + '</div><div class="m"><div>' + esc(x.c) + '</div>' +
-      (x.n ? '<div class="n">' + esc(x.n) + '</div>' : '') + '</div><div class="' + (x.t === 'i' ? 'inc' : 'exp') + '">' +
-      (x.t === 'i' ? '+' : '−') + fmt(x.a) + '</div></div>';
+  // Операции по дням
+  if (!list.length) {
+    $('list').innerHTML = '<div class="empty"><p>В этом месяце пока ничего нет.</p><p class="sub">Нажми «Добавить», чтобы записать первую операцию.</p></div>';
+    return;
   }
-  $('list').innerHTML = html;
+  let html = '<h2>Операции</h2>';
+  for (const d of [...new Set(list.map(x => x.d))]) {
+    const items = list.filter(x => x.d === d);
+    const net = sum(items, 'i') - sum(items, 'e');
+    html += '<div class="day"><span>' + dayLabel(d) + '</span><span>' + (net ? signed(net) : '') + '</span></div><div class="grp">';
+    for (const x of items) {
+      const c = colorOf(x.t, x.c);
+      html += '<button class="op" data-id="' + x.i + '"><span class="ic" style="background:' + rgba(c, .16) + '">' + icon(x.t, x.c) + '</span>' +
+        '<span class="m"><span class="t">' + esc(x.c) + '</span>' + (x.n ? '<span class="n">' + esc(x.n) + '</span>' : '') + '</span>' +
+        '<span class="amt' + (x.t === 'i' ? ' inc' : '') + '">' + (x.t === 'i' ? '+' : '−') + rub(x.a) + '</span></button>';
+    }
+    html += '</div>';
+  }
+  $('list').innerHTML = html + '<p class="foot">Нажми на операцию, чтобы удалить.</p>';
 }
 
 // ---------- Форма ----------
 function renderChips() {
-  $('chips').innerHTML = CATS[type].map(([e, n]) => '<button class="chip' + (cat === n ? ' on' : '') + '" data-c="' + n + '">' + e + ' ' + n + '</button>').join('');
+  $('chips').innerHTML = CATS[type].map(([e, n]) => '<button class="chip" aria-pressed="' + (cat === n) + '" data-c="' + n + '">' + e + ' ' + n + '</button>').join('');
   check();
 }
 function parseAmount() { return parseFloat($('amount').value.replace(/\s/g, '').replace(',', '.')); }
 function check() { const a = parseAmount(); $('save').disabled = !(a > 0) || !cat; }
 function setType(t) {
   type = t; cat = null;
-  $('tE').classList.toggle('on', t === 'e'); $('tI').classList.toggle('on', t === 'i');
+  $('tE').setAttribute('aria-pressed', t === 'e'); $('tI').setAttribute('aria-pressed', t === 'i');
+  $('amountBox').classList.toggle('inc', t === 'i');
+  $('save').textContent = t === 'e' ? 'Добавить расход' : 'Добавить доход';
   renderChips();
 }
 function openSheet() {
   $('amount').value = ''; $('note').value = ''; $('date').value = today();
   setType('e');
   $('bg').classList.add('open');
-  setTimeout(() => $('amount').focus(), 100);
+  setTimeout(() => $('amount').focus(), 260);
 }
 function closeSheet() { $('bg').classList.remove('open'); }
+let tt;
+function toast(m) { const el = $('toast'); el.textContent = m; el.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('show'), 1600); }
 
 $('fab').onclick = openSheet;
 $('bg').onclick = e => { if (e.target === $('bg')) closeSheet(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 $('tE').onclick = () => setType('e');
 $('tI').onclick = () => setType('i');
 $('amount').oninput = check;
@@ -232,7 +363,7 @@ $('save').onclick = () => {
   tx.push({ i: Date.now(), t: type, a, c: cat, d, n: $('note').value.trim() });
   month = d.slice(0, 7);
   persist(month);
-  buzz('success'); closeSheet(); render();
+  buzz('success'); closeSheet(); render(true); toast('Добавлено');
 };
 $('prev').onclick = () => shift(-1);
 $('next').onclick = () => shift(1);
@@ -240,7 +371,7 @@ function shift(k) {
   const [y, m] = month.split('-').map(Number);
   const d = new Date(y, m - 1 + k, 1);
   month = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  render();
+  render(true);
 }
 
 // Удаление по нажатию на операцию
@@ -251,13 +382,13 @@ $('list').onclick = e => {
   const del = ok => {
     if (!ok) return;
     tx = tx.filter(t => t.i !== id);
-    persist(x.d.slice(0, 7)); buzz('warning'); render();
+    persist(x.d.slice(0, 7)); buzz('warning'); render(true); toast('Удалено');
   };
-  const msg = 'Удалить операцию «' + x.c + '» на ' + fmt(x.a) + '?';
-  if (tg && tg.showConfirm) tg.showConfirm(msg, del); else del(confirm(msg));
+  const msg = 'Удалить операцию «' + x.c + '» на ' + rub(x.a) + '?';
+  if (inTg && tg.showConfirm) tg.showConfirm(msg, del); else del(confirm(msg));
 };
 
-load().then(render);
+load().then(() => render(true));
 </script>
 </body>
 </html>
