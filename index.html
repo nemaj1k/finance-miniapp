@@ -14,7 +14,7 @@
   --glass:rgba(255,255,255,.58); --glass-hi:rgba(255,255,255,.8); --sheet:rgba(255,255,255,.84); --stroke:rgba(255,255,255,.8);
   --field:rgba(18,20,42,.06); --seg-on:rgba(255,255,255,.92);
   --shadow:0 10px 40px rgba(50,60,140,.12);
-  --pos:#2B3BFF; --green:#0B8F66; --warn:#D63518;
+  --pos:#6C4DFF; --grad:linear-gradient(135deg,#4F6BFF 0%,#7A55FF 55%,#A862FF 100%); --glow:0 8px 24px rgba(122,86,255,.32); --green:#0B8F66; --warn:#D63518;
   --o1:#4B5CFF; --o2:#9A6BFF; --o3:#3CC8FF; --oa:.5;
   --display:'Unbounded','Golos Text',system-ui,sans-serif;
   --body:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -113,7 +113,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 .qbar input::placeholder{color:var(--hint)}
 .plus,.go{width:44px;height:44px;border:0;border-radius:50%;display:grid;place-items:center;flex:none}
 .plus{background:var(--field)}
-.go{background:var(--pos);color:#fff}
+.go{background:var(--grad);color:#fff;box-shadow:var(--glow)}
 .go:disabled{opacity:.35;cursor:default}
 
 /* ---- Окна снизу ---- */
@@ -136,7 +136,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .fields{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-bottom:16px}
 .fields input,.fi{min-width:0;width:100%;border:0;border-radius:14px;background:var(--field);padding:13px 14px;outline:none}
-.save{width:100%;height:54px;border:0;border-radius:16px;background:var(--pos);color:#fff;font-weight:600;font-size:17px}
+.save{width:100%;height:54px;border:0;border-radius:16px;background:var(--grad);color:#fff;font-weight:600;font-size:17px;box-shadow:var(--glow)}
 .save:disabled{opacity:.4;cursor:default}
 .sh{margin:0 0 4px}
 .fl{display:block;margin:16px 0 6px;font-weight:600;font-size:14px}
@@ -196,7 +196,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 .debt .tr i{display:block;height:100%;border-radius:4px;background:var(--green)}
 .debt .pay{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
 .debt .pay .fi{padding:10px 12px}
-.debt .pay button{border:0;border-radius:14px;background:var(--pos);color:#fff;font-weight:600;padding:0 16px}
+.debt .pay button{border:0;border-radius:14px;background:var(--grad);color:#fff;font-weight:600;padding:0 16px}
 .dadd{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
 .dadd .fi:first-child{grid-column:1/-1}
 
@@ -205,7 +205,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 :root:not([data-theme="dark"]) .onb{background:rgba(237,239,248,.3)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.onb{background:var(--bg)}}
 .onb-card{width:100%;max-width:440px;background:var(--glass);border:1px solid var(--stroke);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:var(--shadow);border-radius:32px;padding:28px 22px 22px}
-.onb-ic{width:64px;height:64px;border-radius:20px;background:var(--pos);color:#fff;display:grid;place-items:center;font-family:var(--display);font-size:30px;font-weight:600;margin-bottom:18px}
+.onb-ic{width:64px;height:64px;border-radius:20px;background:var(--grad);box-shadow:var(--glow);color:#fff;display:grid;place-items:center;font-family:var(--display);font-size:30px;font-weight:600;margin-bottom:18px}
 .onb h1{font-family:var(--display);font-size:24px;line-height:1.2;margin:0 0 12px;font-weight:600}
 .onb p{color:var(--hint);margin:0 0 10px;line-height:1.45}
 .onb ul{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:12px}
@@ -375,7 +375,7 @@ const CATS = {
   i: [['💼','Зарплата'],['🎓','Стипендия'],['💸','Подработка'],['🎁','Подарки'],['📦','Другое']]
 };
 const EC = { 'Продукты':'#F59F00','Транспорт':'#4DABF7','Кафе':'#FA5252','Жильё':'#7950F2','Развлечения':'#E64980','Одежда':'#15AABF','Здоровье':'#40C057','Учёба':'#5C7CFA','Другое':'#868E96' };
-const POS = '#2B3BFF', NEG = '#D63518';
+const POS = '#6C4DFF', NEG = '#D63518';
 
 let tx = [];
 let month = today().slice(0, 7);
