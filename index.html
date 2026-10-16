@@ -230,6 +230,12 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
       <input class="fi" id="pDay" type="text" inputmode="numeric" placeholder="Число" aria-label="Число месяца" autocomplete="off">
       <button class="chip" id="pAdd" type="button">Добавить платёж</button>
     </div>
+    <label class="fl">Данные</label>
+    <div class="chips">
+      <button class="chip" id="dImp" type="button">Импорт из файла</button>
+      <button class="chip" id="dExp" type="button">Скопировать копию</button>
+    </div>
+    <input id="dFile" type="file" accept=".json,application/json,text/plain" hidden>
     <p class="hintp">Данные хранятся в твоём Telegram-аккаунте. У приложения нет своего сервера.</p>
     <button class="save" id="bSave">Сохранить</button>
   </div>
@@ -685,6 +691,50 @@ $('bPays').onclick = e => { const b = e.target.closest('[data-del]'); if (b) { w
 $('pAdd').onclick = addPay;
 $('bSave').onclick = saveBudget;
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBudget(); });
+
+
+// ---------- Импорт / экспорт ----------
+function importTx(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { toast('Не получилось прочитать файл'); return; }
+  const list = Array.isArray(data) ? data : (data && Array.isArray(data.tx) ? data.tx : null);
+  if (!list) { toast('В файле нет операций'); return; }
+  const key = x => [x.t, Math.round(x.a * 100), x.c, x.d, x.n || ''].join('|');
+  const seen = new Set(tx.map(key));
+  let id = Date.now(), added = 0;
+  const months = new Set();
+  for (const r of list.slice(0, 20000)) {
+    if (!r || (r.t !== 'e' && r.t !== 'i')) continue;
+    const a = Number(r.a);
+    if (!(a > 0) || a > 1e12 || !/^\d{4}-\d{2}-\d{2}$/.test(r.d || '')) continue;
+    const x = { i: ++id, t: r.t, a: Math.round(a * 100) / 100, c: String(r.c || 'Другое').slice(0, 30), d: r.d, n: String(r.n || '').slice(0, 60) };
+    if (seen.has(key(x))) continue;
+    seen.add(key(x)); tx.push(x); months.add(x.d.slice(0, 7)); added++;
+  }
+  months.forEach(persist);
+  closeBudget(); render(false);
+  toast(added ? 'Добавлено операций: ' + added : 'Новых операций нет');
+  if (added) buzz('success');
+}
+$('dImp').onclick = () => $('dFile').click();
+$('dFile').onchange = e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  if (f.size > 5e6) { toast('Файл слишком большой'); return; }
+  const r = new FileReader();
+  r.onload = () => importTx(String(r.result));
+  r.readAsText(f);
+};
+$('dExp').onclick = async () => {
+  const s = JSON.stringify(tx.map(({ t, a, c, d, n }) => ({ t, a, c, d, n })));
+  try { await navigator.clipboard.writeText(s); toast('Копия в буфере обмена'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = s; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {}
+    ta.remove(); toast(ok ? 'Копия в буфере обмена' : 'Не удалось скопировать');
+  }
+};
 
 load().then(() => render(true));
 </script>
