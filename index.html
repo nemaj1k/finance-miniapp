@@ -11,14 +11,14 @@
 <style>
 :root{
   --bg:#F4F5F7; --surface:#FFFFFF; --ink:#14161F; --hint:#636B7B; --line:#E6E8ED; --field:#ECEEF2; --seg-on:#FFFFFF;
-  --pos:#2B3BFF; --neg:#D63518; --green:#0B8F66; --hero:#2B3BFF;
+  --pos:#2B3BFF; --neg:#D63518; --green:#0B8F66; --warn:#D63518; --hero:#2B3BFF;
   --display:'Unbounded','Golos Text',system-ui,sans-serif;
   --body:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   color-scheme:light;
 }
 :root[data-theme="dark"]{
   --bg:#0D0F14; --surface:#171A21; --ink:#F2F4F8; --hint:#98A0B1; --line:#252A34; --field:#1F232C; --seg-on:#2C313D;
-  --green:#3DDC9A;
+  --green:#3DDC9A; --warn:#FF8A70;
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -112,13 +112,30 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
 .toast{position:fixed;left:50%;bottom:calc(128px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:14px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
+.tcard{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--surface);border-radius:22px;padding:18px}
+.tl{color:var(--hint);font-size:14px}
+.tv{font:600 32px/1.2 var(--display);margin:4px 0 6px;font-variant-numeric:tabular-nums}
+.tv.low{color:var(--warn)}
+.ts{color:var(--hint);font-size:13px}
+.tbtn{flex:none;border:0;border-radius:14px;padding:10px 14px;background:var(--field);font-weight:600;font-size:14px}
+.sh{margin:0 0 4px}
+.fl{display:block;margin:16px 0 6px;font-weight:600;font-size:14px}
+.fi{width:100%;border:0;border-radius:14px;background:var(--field);padding:13px 14px;outline:none}
+.payadd{display:grid;grid-template-columns:1.6fr 1fr .7fr;gap:8px;margin-top:8px}
+.payadd .chip{grid-column:1/-1;justify-content:center}
+.pay{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.pay span:first-child{flex:1;font-weight:500}
+.pm{color:var(--hint);font-size:14px}
+.pay button{border:0;background:transparent;color:var(--hint);padding:6px}
+.hintp{color:var(--hint);font-size:13px;margin:10px 0 14px}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 
 <header class="hero" id="hero">
-  <div class="glyph" aria-hidden="true">₽</div>
+  <div class="glyph" id="glyph" aria-hidden="true">₽</div>
   <div class="hero-in">
     <div class="mnav">
       <button id="prev" aria-label="Предыдущий месяц"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -126,7 +143,7 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
       <button id="next" aria-label="Следующий месяц"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
     <div class="bl">Баланс месяца</div>
-    <div class="bal" id="bal"><span id="balNum">0</span><span class="cur">₽</span></div>
+    <div class="bal" id="bal"><span id="balNum">0</span><span class="cur" id="cur">₽</span></div>
     <div class="flow">
       <div><small>Доходы</small><b id="inc">+0&nbsp;₽</b></div>
       <div><small>Расходы</small><b id="exp">−0&nbsp;₽</b></div>
@@ -135,6 +152,7 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
 </header>
 
 <main>
+  <section class="block" id="today" hidden></section>
   <section class="block" id="stats" hidden></section>
   <section class="block" id="list"></section>
 </main>
@@ -158,7 +176,7 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
     </div>
     <div class="amount" id="amountBox">
       <input id="amount" type="text" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Сумма">
-      <span class="rub">₽</span>
+      <span class="rub" id="rubSym">₽</span>
     </div>
     <div class="chips" id="chips"></div>
     <div class="fields">
@@ -166,6 +184,31 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
       <input id="note" type="text" placeholder="Заметка" maxlength="60" aria-label="Заметка">
     </div>
     <button class="save" id="save" disabled>Добавить расход</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="bg2">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Бюджет">
+    <div class="grab"></div>
+    <h2 class="sh">Бюджет</h2>
+    <label class="fl">Валюта</label>
+    <div class="chips" id="bCur"></div>
+    <label class="fl" for="bNow">Сколько денег у тебя сейчас</label>
+    <input class="fi" id="bNow" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
+    <label class="fl" for="bDays">Какого числа приходят деньги</label>
+    <input class="fi" id="bDays" type="text" inputmode="numeric" placeholder="Например: 10, 25" autocomplete="off">
+    <label class="fl" for="bRes">Резерв, который не трогаем</label>
+    <input class="fi" id="bRes" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
+    <label class="fl">Обязательные платежи каждый месяц</label>
+    <div id="bPays"></div>
+    <div class="payadd">
+      <input class="fi" id="pName" type="text" placeholder="Название" maxlength="30" aria-label="Название платежа" autocomplete="off">
+      <input class="fi" id="pAmt" type="text" inputmode="decimal" placeholder="Сумма" aria-label="Сумма платежа" autocomplete="off">
+      <input class="fi" id="pDay" type="text" inputmode="numeric" placeholder="Число" aria-label="Число месяца" autocomplete="off">
+      <button class="chip" id="pAdd" type="button">Добавить платёж</button>
+    </div>
+    <p class="hintp">Данные хранятся в твоём Telegram-аккаунте. У приложения нет своего сервера.</p>
+    <button class="save" id="bSave">Сохранить</button>
   </div>
 </div>
 
@@ -186,12 +229,14 @@ let month = today().slice(0, 7);
 let type = 'e';
 let cat = null;
 let heroColor = POS;
+let cfg = { cur: '₽', start: 0, days: [], reserve: 0, pays: [], set: false };
+cfg.cur = defaultCur();
 
 function today() { return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 const $ = id => document.getElementById(id);
 const nf = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const num = n => nf.format(Math.abs(n));
-const rub = n => num(n) + ' ₽';
+const rub = n => num(n) + '\u00A0' + cfg.cur;
 const signed = n => (n < 0 ? '−' : n > 0 ? '+' : '') + rub(n);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sum = (l, t) => l.filter(x => x.t === t).reduce((s, x) => s + x.a, 0);
@@ -229,8 +274,10 @@ let queue = Promise.resolve();
 async function load() {
   let local = [];
   try { local = JSON.parse(localStorage.getItem('tx') || '[]'); } catch (e) {}
+  try { Object.assign(cfg, JSON.parse(localStorage.getItem('cfg') || '{}')); } catch (e) {}
   if (!cs) { tx = local; return; }
-  const { idx } = await csGet(['idx']);
+  const { idx, cfg: rawCfg } = await csGet(['idx', 'cfg']);
+  try { if (rawCfg) Object.assign(cfg, JSON.parse(rawCfg)); } catch (e) {}
   const months = idx ? JSON.parse(idx) : [];
   const out = [];
   for (const m of months) {
@@ -300,6 +347,7 @@ function render(animate) {
   const inc = sum(list, 'i'), exp = sum(list, 'e'), bal = inc - exp;
 
   $('mlabel').textContent = monthLabel();
+  applyCur(); renderToday();
   $('inc').textContent = '+' + rub(inc);
   $('exp').textContent = '−' + rub(exp);
   heroColor = bal < 0 ? NEG : POS;
@@ -457,7 +505,7 @@ function parse(raw) {
     d = yy + '-' + m[3] + '-' + pad2(Number(m[2]));
   }
 
-  s = s.replace(/(\d)\s*(?:₽|руб(?:лей|ля)?\.?|р\.?)(?![а-яёa-z])/gi, '$1 ');
+  s = s.replace(/(\d)\s*(?:₽|\$|€|₸|₴|руб(?:лей|ля)?\.?|р\.?)(?![а-яёa-z])/gi, '$1 ');
   let a = 0;
   const am = s.match(/(\d{1,3}(?:[ \u00A0]\d{3})+|\d+)(?:[.,](\d{1,2}))?\s*(тыс\.?|к|k)?(?![а-яёa-z\d])/i);
   if (am) {
@@ -518,6 +566,103 @@ $('pv').onclick = e => {
   else { const list = CATS[q.t], i = list.findIndex(x => x[1] === q.c); qc = list[(i + 1) % list.length][1]; }
   renderQuick();
 };
+
+// ---------- Бюджет: «сколько можно тратить в день» ----------
+const CURS = ['₽','$','€','₸','₴'];
+function defaultCur() {
+  let l = 'ru';
+  try { l = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || navigator.language || 'ru'; } catch (e) {}
+  l = String(l).slice(0, 2).toLowerCase();
+  return l === 'uk' ? '₴' : l === 'kk' ? '₸' : l === 'en' ? '$' : ['de','fr','es','it','pt','nl'].includes(l) ? '€' : '₽';
+}
+const dim = (y, m) => new Date(y, m, 0).getDate();
+const isDue = (ds, day) => { const [y, m, d] = ds.split('-').map(Number); return d === Math.min(day, dim(y, m)); };
+const total = () => cfg.start + sum(tx, 'i') - sum(tx, 'e');
+const plural = (n, f) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? f[0] : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? f[1] : f[2]; };
+const numIn = v => { const x = parseFloat(String(v).replace(/\s/g, '').replace(',', '.')); return isNaN(x) ? null : x; };
+
+// Свободно = деньги сейчас − платежи до следующего поступления − резерв. Платежи сегодняшнего дня считаем уже оплаченными.
+function budget() {
+  if (!cfg.set || !cfg.days.length) return null;
+  const T = today();
+  let n = 0, next = null;
+  for (let i = 1; i <= 62 && !next; i++) { const ds = addDays(T, i); if (cfg.days.some(x => isDue(ds, x))) { next = ds; n = i; } }
+  if (!next) return null;
+  let pay = 0, cnt = 0;
+  for (let i = 1; i < n; i++) { const ds = addDays(T, i); cfg.pays.forEach(p => { if (isDue(ds, p.d)) { pay += p.a; cnt++; } }); }
+  const free = Math.round((total() - pay - cfg.reserve) * 100) / 100;
+  return { free, per: free / n, n, date: next, pay, cnt };
+}
+function applyCur() { $('glyph').textContent = cfg.cur; $('cur').textContent = cfg.cur; $('rubSym').textContent = cfg.cur; }
+function renderToday() {
+  const el = $('today');
+  el.hidden = month !== today().slice(0, 7);
+  if (el.hidden) return;
+  const b = budget();
+  if (!b) {
+    el.innerHTML = '<div class="tcard"><div><div class="tl">Сколько можно тратить в день?</div><div class="ts">' +
+      (cfg.set ? 'Укажи, какого числа приходят деньги.' : 'Укажи, когда приходят деньги и какие платежи обязательны.') +
+      '</div></div><button class="tbtn" data-act="setup">Настроить</button></div>';
+    return;
+  }
+  const low = b.free < 0;
+  const dt = new Date(b.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  el.innerHTML = '<div class="tcard"><div><div class="tl">Можно тратить в день</div><div class="tv' + (low ? ' low' : '') + '">' + rub(low ? 0 : Math.floor(b.per)) + '</div><div class="ts">' +
+    (low ? 'До ' + dt + ' не хватает ' + rub(-b.free) : 'Свободно до ' + dt + ': ' + rub(b.free)) +
+    (b.cnt ? ' · учтено ' + b.cnt + ' ' + plural(b.cnt, ['платёж', 'платежа', 'платежей']) + ' на ' + rub(b.pay) : '') +
+    '</div></div><button class="tbtn" data-act="setup">Изменить</button></div>';
+}
+function saveCfg() {
+  try { localStorage.setItem('cfg', JSON.stringify(cfg)); } catch (e) {}
+  if (cs) queue = queue.then(() => csSet('cfg', JSON.stringify(cfg))).catch(() => {});
+}
+
+// Экран настроек бюджета
+let bcur = '₽', wp = [];
+function renderBudgetForm() {
+  $('bCur').innerHTML = CURS.map(c => '<button class="chip" aria-pressed="' + (c === bcur) + '" data-cur="' + c + '">' + c + '</button>').join('');
+  $('bPays').innerHTML = wp.length
+    ? wp.map((p, i) => '<div class="pay"><span>' + esc(p.n) + '</span><span class="pm">' + num(p.a) + ' ' + bcur + ' · ' + p.d + '-го</span><button data-del="' + i + '" aria-label="Удалить платёж">✕</button></div>').join('')
+    : '<p class="hintp">Аренда, подписки, кредит: всё, что списывается каждый месяц.</p>';
+}
+function openBudget() {
+  $('q').blur();
+  bcur = cfg.cur;
+  wp = cfg.pays.map(p => ({ ...p }));
+  $('bNow').value = String(Math.round(total() * 100) / 100).replace('.', ',');
+  $('bDays').value = cfg.days.join(', ');
+  $('bRes').value = cfg.reserve ? String(cfg.reserve) : '';
+  $('pName').value = ''; $('pAmt').value = ''; $('pDay').value = '';
+  renderBudgetForm();
+  $('bg2').classList.add('open');
+}
+function closeBudget() { $('bg2').classList.remove('open'); }
+function addPay() {
+  const a = numIn($('pAmt').value), d = Math.round(numIn($('pDay').value));
+  if (!(a > 0) || !(d >= 1 && d <= 31)) { toast('Укажи сумму и число месяца'); return false; }
+  if (wp.length >= 30) { toast('Можно добавить не больше 30 платежей'); return false; }
+  wp.push({ n: $('pName').value.trim().slice(0, 30) || 'Платёж', a, d });
+  $('pName').value = ''; $('pAmt').value = ''; $('pDay').value = '';
+  renderBudgetForm();
+  return true;
+}
+function saveBudget() {
+  if ($('pAmt').value.trim() && $('pDay').value.trim() && !addPay()) return;
+  cfg.cur = bcur;
+  const now = numIn($('bNow').value);
+  if (now !== null) cfg.start = Math.round((now - (sum(tx, 'i') - sum(tx, 'e'))) * 100) / 100;
+  cfg.days = [...new Set(($('bDays').value.match(/\d+/g) || []).map(Number).filter(x => x >= 1 && x <= 31))].sort((a, b) => a - b);
+  const r = numIn($('bRes').value); cfg.reserve = r > 0 ? r : 0;
+  cfg.pays = wp; cfg.set = true;
+  saveCfg(); closeBudget(); render(false); buzz('success'); toast('Сохранено');
+}
+$('today').onclick = e => { if (e.target.closest('[data-act="setup"]')) openBudget(); };
+$('bg2').onclick = e => { if (e.target === $('bg2')) closeBudget(); };
+$('bCur').onclick = e => { const b = e.target.closest('[data-cur]'); if (b) { bcur = b.dataset.cur; renderBudgetForm(); } };
+$('bPays').onclick = e => { const b = e.target.closest('[data-del]'); if (b) { wp.splice(Number(b.dataset.del), 1); renderBudgetForm(); } };
+$('pAdd').onclick = addPay;
+$('bSave').onclick = saveBudget;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBudget(); });
 
 load().then(() => render(true));
 </script>
