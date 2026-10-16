@@ -152,6 +152,33 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.blrow{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.blrow .bl{margin:0}
+.menu{width:40px;height:40px;border:1px solid var(--stroke);border-radius:50%;background:var(--field);display:grid;place-items:center;color:var(--ink)}
+.menu:active{background:var(--glass-hi)}
+.dr-bg{position:fixed;inset:0;background:rgba(10,12,30,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:20;visibility:hidden;opacity:0;transition:opacity .2s,visibility .2s}
+.dr-bg.open{visibility:visible;opacity:1}
+.drawer{position:absolute;top:0;bottom:0;left:0;width:min(84vw,330px);background:var(--sheet);border-right:1px solid var(--stroke);-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);padding:calc(22px + env(safe-area-inset-top)) 0 calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .25s cubic-bezier(.2,.8,.2,1);overflow:auto}
+.dr-bg.open .drawer{transform:none}
+.dr-head{padding:0 20px 18px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.dr-head small{display:block;color:var(--hint);font-size:13px}
+.dr-head b{display:block;font-family:var(--display);font-size:24px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+.dr-item{display:flex;align-items:center;gap:16px;width:100%;border:0;background:transparent;color:var(--ink);padding:14px 20px;font-size:17px;font-weight:500;text-align:left}
+.dr-item:active{background:var(--field)}
+.dr-item svg{flex:none;opacity:.8}
+.dr-foot{margin-top:auto;padding:14px 20px 0;color:var(--hint);font-size:13px}
+.mrow{display:grid;grid-template-columns:5.2rem 1fr;gap:4px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.mrow:first-child{border-top:0}
+.mrow .bars{display:grid;gap:4px}
+.mrow .bars i{display:block;height:8px;border-radius:4px;min-width:2px}
+.mrow .vals{grid-column:2;color:var(--hint);font-size:12px;font-variant-numeric:tabular-nums}
+.days{display:flex;align-items:flex-end;gap:2px;height:120px;margin:8px 0 4px}
+.days i{flex:1;min-width:2px;border-radius:3px 3px 0 0;background:var(--pos);opacity:.85}
+.crow{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.crow:first-child{border-top:0}
+.crow button{border:0;background:var(--field);color:var(--warn);width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1}
+.cadd{display:grid;grid-template-columns:3.6rem 1fr;gap:10px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -165,7 +192,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
       <div class="mlabel" id="mlabel" aria-live="polite"></div>
       <button id="next" aria-label="Следующий месяц"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
-    <div class="bl">Баланс месяца</div>
+    <div class="blrow"><div class="bl">Баланс месяца</div><button class="menu" id="menu" aria-label="Меню"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button></div>
     <div class="bal" id="bal"><span id="balNum">0</span><span class="cur" id="cur">₽</span></div>
     <div class="flow">
       <div><small>Доходы</small><b id="inc">+0&nbsp;₽</b></div>
@@ -207,6 +234,47 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
       <input id="note" type="text" placeholder="Заметка" maxlength="60" aria-label="Заметка">
     </div>
     <button class="save" id="save" disabled>Добавить расход</button>
+  </div>
+</div>
+
+
+<div class="dr-bg" id="drBg">
+  <nav class="drawer" aria-label="Меню">
+    <div class="dr-head"><small>Остаток</small><b id="drBal">0</b></div>
+    <button class="dr-item" data-go="home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Главная</button>
+    <button class="dr-item" data-go="charts"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Графики</button>
+    <button class="dr-item" data-go="cats"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Категории</button>
+    <button class="dr-item" data-go="budget"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11H4zM4 8l2-4h12l2 4M15 13.5h2"/></svg>Бюджет и платежи</button>
+    <button class="dr-item" data-go="imp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></svg>Импорт из файла</button>
+    <button class="dr-item" data-go="exp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 20h14"/></svg>Скопировать копию</button>
+    <div class="dr-foot">Данные хранятся в твоём Telegram-аккаунте</div>
+  </nav>
+</div>
+
+<div class="sheet-bg" id="bg3">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Графики">
+    <div class="grab"></div>
+    <h2 class="sh">Графики</h2>
+    <label class="fl" id="chT1">Расходы по дням</label>
+    <div class="days" id="chDays"></div>
+    <label class="fl">Доходы и расходы по месяцам</label>
+    <div id="chMonths"></div>
+  </div>
+</div>
+
+<div class="sheet-bg" id="bg4">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Категории">
+    <div class="grab"></div>
+    <h2 class="sh">Категории</h2>
+    <label class="fl">Расходы</label><div id="catE"></div>
+    <label class="fl">Доходы</label><div id="catI"></div>
+    <label class="fl">Новая категория</label>
+    <div class="seg" id="cType"><button data-t="e" aria-pressed="true">Расход</button><button data-t="i" aria-pressed="false">Доход</button></div>
+    <div class="cadd">
+      <input class="fi" id="cEmoji" type="text" placeholder="🏷️" maxlength="4" aria-label="Эмодзи" autocomplete="off">
+      <input class="fi" id="cName" type="text" placeholder="Название" maxlength="30" aria-label="Название категории" autocomplete="off">
+    </div>
+    <button class="save" id="cAdd" style="margin-top:14px">Добавить</button>
   </div>
 </div>
 
@@ -557,6 +625,10 @@ function parse(raw) {
   if (t === 'e' && (KW.i.some(([, kws]) => kws.some(k => hit(words, k))) || INCOME_TRIGGERS.some(k => hit(words, k)))) t = 'i';
   let c = 'Другое';
   for (const [name, kws] of KW[t]) if (kws.some(k => hit(words, k))) { c = name; break; }
+  if (c === 'Другое') for (const [, name] of ((cfg.cats && cfg.cats[t]) || [])) {
+    const k = norm(name).split(/[^a-zа-я0-9]+/)[0];
+    if (k && (k.length >= 3 ? words.some(w => w.startsWith(k)) : words.includes(k))) { c = name; break; }
+  }
 
   let n = s.replace(/#/g, '').replace(/\s+/g, ' ').trim();
   if (norm(n) === norm(c)) n = '';
@@ -751,6 +823,90 @@ $('dExp').onclick = async () => {
     ta.remove(); toast(ok ? 'Копия в буфере обмена' : 'Не удалось скопировать');
   }
 };
+
+
+// ---------- Меню ----------
+const MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+function openDrawer() {
+  $('q').blur();
+  const tt = total();
+  $('drBal').textContent = (tt < 0 ? '−' : '') + rub(tt);
+  $('drBg').classList.add('open');
+}
+function closeDrawer() { $('drBg').classList.remove('open'); }
+function openCharts() {
+  const [y, m] = month.split('-').map(Number);
+  const dim = new Date(y, m, 0).getDate();
+  const per = Array(dim).fill(0);
+  tx.filter(t => t.t === 'e' && t.d.startsWith(month)).forEach(t => { per[Number(t.d.slice(8, 10)) - 1] += t.a; });
+  const mx = Math.max(1, ...per);
+  $('chT1').textContent = 'Расходы по дням, ' + monthLabel().toLowerCase();
+  $('chDays').innerHTML = per.map(v => '<i style="height:' + Math.max(2, Math.round(v / mx * 100)) + '%;opacity:' + (v ? .9 : .2) + '"></i>').join('');
+  const by = {};
+  tx.forEach(t => { const k = t.d.slice(0, 7); (by[k] = by[k] || { i: 0, e: 0 })[t.t] += t.a; });
+  const keys = Object.keys(by).sort().reverse();
+  const big = Math.max(1, ...keys.map(k => Math.max(by[k].i, by[k].e)));
+  $('chMonths').innerHTML = keys.map(k => {
+    const [yy, mm] = k.split('-').map(Number);
+    return '<div class="mrow"><b>' + MN[mm - 1].slice(0, 3) + ' ' + yy + '</b><div class="bars">' +
+      '<i style="width:' + by[k].i / big * 100 + '%;background:var(--green)"></i>' +
+      '<i style="width:' + by[k].e / big * 100 + '%;background:var(--pos)"></i></div>' +
+      '<div class="vals">+' + num(by[k].i) + ' / −' + num(by[k].e) + ' ' + cfg.cur + '</div></div>';
+  }).join('') || '<p class="hintp">Пока нет операций</p>';
+  $('bg3').classList.add('open');
+}
+let ctype = 'e';
+function renderCats() {
+  for (const tt of ['e', 'i']) {
+    const box = $(tt === 'e' ? 'catE' : 'catI'); box.textContent = '';
+    const custom = ((cfg.cats && cfg.cats[tt]) || []).map(x => x[1]);
+    for (const [e, n] of CATS[tt]) {
+      const row = document.createElement('div'); row.className = 'crow';
+      const sp = document.createElement('span'); sp.textContent = e + ' ' + n; row.appendChild(sp);
+      if (custom.includes(n)) {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Удалить ' + n);
+        b.dataset.t = tt; b.dataset.n = n; row.appendChild(b);
+      }
+      box.appendChild(row);
+    }
+  }
+}
+function openCats() { renderCats(); $('cName').value = ''; $('cEmoji').value = ''; $('bg4').classList.add('open'); }
+function addCat() {
+  const n = $('cName').value.trim().slice(0, 30), e = ($('cEmoji').value.trim() || '🏷️').slice(0, 4);
+  if (!n) { toast('Введи название'); return; }
+  if (CATS[ctype].some(x => x[1].toLowerCase() === n.toLowerCase())) { toast('Такая категория уже есть'); return; }
+  if (!cfg.cats) cfg.cats = { e: [], i: [] };
+  if (cfg.cats[ctype].length >= 40) { toast('Слишком много категорий'); return; }
+  cfg.cats[ctype].push([e, n]); applyCats(); saveCfg(); renderCats(); render(false);
+  $('cName').value = ''; $('cEmoji').value = ''; buzz('success'); toast('Добавлено');
+}
+$('menu').onclick = openDrawer;
+$('drBg').onclick = e => {
+  if (e.target === $('drBg')) return closeDrawer();
+  const b = e.target.closest('[data-go]'); if (!b) return;
+  closeDrawer();
+  const g = b.dataset.go;
+  if (g === 'charts') openCharts();
+  else if (g === 'cats') openCats();
+  else if (g === 'budget') openBudget();
+  else if (g === 'imp') $('dImp').click();
+  else if (g === 'exp') $('dExp').click();
+};
+$('bg3').onclick = e => { if (e.target === $('bg3')) $('bg3').classList.remove('open'); };
+$('bg4').onclick = e => { if (e.target === $('bg4')) $('bg4').classList.remove('open'); };
+$('cType').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; ctype = b.dataset.t; $('cType').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+$('cAdd').onclick = addCat;
+$('cName').addEventListener('keydown', e => { if (e.key === 'Enter') addCat(); });
+const catBox = e => {
+  const b = e.target.closest('button[data-n]'); if (!b) return;
+  const tt = b.dataset.t, n = b.dataset.n;
+  cfg.cats[tt] = cfg.cats[tt].filter(x => x[1] !== n);
+  const i = CATS[tt].findIndex(x => x[1] === n); if (i >= 0) CATS[tt].splice(i, 1);
+  saveCfg(); renderCats(); render(false); toast('Удалено. Старые операции остались');
+};
+$('catE').onclick = catBox; $('catI').onclick = catBox;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); $('bg3').classList.remove('open'); $('bg4').classList.remove('open'); } });
 
 load().then(() => { applyCats(); render(true); });
 </script>
