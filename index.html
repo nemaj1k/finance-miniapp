@@ -329,6 +329,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
     <label class="fl" for="bRes">Резерв, который не трогаем</label>
     <input class="fi" id="bRes" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
     <label class="fl">Обязательные платежи каждый месяц</label>
+    <p class="hintp" style="margin:0 0 8px">В нужный день они сами запишутся в расходы.</p>
     <div id="bPays"></div>
     <div class="payadd">
       <input class="fi" id="pName" type="text" placeholder="Название" maxlength="30" aria-label="Название платежа" autocomplete="off">
@@ -812,7 +813,7 @@ function addPay() {
   const a = numIn($('pAmt').value), d = Math.round(numIn($('pDay').value));
   if (!(a > 0) || !(d >= 1 && d <= 31)) { toast('Укажи сумму и число месяца'); return false; }
   if (wp.length >= 30) { toast('Можно добавить не больше 30 платежей'); return false; }
-  wp.push({ n: $('pName').value.trim().slice(0, 30) || 'Платёж', a, d });
+  wp.push({ n: $('pName').value.trim().slice(0, 30) || 'Платёж', a, d, s: today() });
   $('pName').value = ''; $('pAmt').value = ''; $('pDay').value = '';
   renderBudgetForm();
   return true;
@@ -1056,7 +1057,34 @@ const catBox = e => {
 $('catE').onclick = catBox; $('catI').onclick = catBox;
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); $('bg3').classList.remove('open'); $('bg4').classList.remove('open'); $('bg5').classList.remove('open'); } });
 
-load().then(() => { applyCats(); render(true); });
+// ---------- Регулярные платежи: автозапись в расходы ----------
+function runAutoPays() {
+  if (!cfg.pays || !cfg.pays.length) return 0;
+  const T = today(); let added = 0, changed = false; const months = new Set();
+  for (const p of cfg.pays) {
+    if (!p.s) { p.s = T; changed = true; continue; }
+    if (p.s >= T) continue;
+    const q = parse(p.n || ''); const c = q.t === 'e' ? q.c : 'Другое';
+    let [y, m] = p.s.slice(0, 7).split('-').map(Number);
+    for (let g = 0; g < 36; g++) {
+      const mk = y + '-' + pad2(m);
+      if (mk > T.slice(0, 7)) break;
+      const due = mk + '-' + pad2(Math.min(p.d, new Date(y, m, 0).getDate()));
+      if (due > p.s && due <= T) { tx.push({ i: Date.now() + added, t: 'e', a: p.a, c, d: due, n: p.n }); months.add(mk); added++; }
+      if (++m > 12) { m = 1; y++; }
+    }
+    p.s = T; changed = true;
+  }
+  months.forEach(persist);
+  if (changed) saveCfg();
+  return added;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const n = runAutoPays(); if (n) { render(false); toast('Записано регулярных платежей: ' + n); }
+});
+
+load().then(() => { applyCats(); const n = runAutoPays(); render(true); if (n) setTimeout(() => toast('Записано регулярных платежей: ' + n), 600); });
 </script>
 </body>
 </html>
