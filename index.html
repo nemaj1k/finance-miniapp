@@ -23,7 +23,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--body);padding-bottom:calc(120px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--body);padding-bottom:calc(150px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid #8FA0FF;outline-offset:2px}
@@ -72,8 +72,19 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
 .empty .sub{color:var(--hint);margin-top:6px}
 
 /* ---- Кнопка добавления ---- */
-.add{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:56px;padding:0 26px 0 20px;border:0;border-radius:28px;background:var(--ink);color:var(--bg);font-weight:600;font-size:17px;box-shadow:0 10px 30px rgba(10,12,20,.28);z-index:5;transition:transform .12s}
-.add:active{transform:translateX(-50%) scale(.97)}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:28px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 62%,transparent);pointer-events:none}
+.dock>*{pointer-events:auto;max-width:520px;margin-left:auto;margin-right:auto}
+.pv{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.pv[hidden]{display:none}
+.pc{display:inline-flex;align-items:center;gap:5px;border:0;border-radius:12px;padding:7px 11px;background:var(--surface);box-shadow:0 1px 4px rgba(10,12,20,.14);font-weight:500;font-size:14px}
+.pc.warn{color:var(--hint)}
+.qbar{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:30px;padding:6px;box-shadow:0 10px 30px rgba(10,12,20,.2)}
+.qbar input{flex:1;min-width:0;border:0;background:transparent;outline:none;padding:10px 6px;font-size:16px}
+.qbar input::placeholder{color:var(--hint)}
+.plus,.go{width:44px;height:44px;border:0;border-radius:50%;display:grid;place-items:center;flex:none}
+.plus{background:var(--field)}
+.go{background:var(--pos);color:#fff}
+.go:disabled{opacity:.35;cursor:default}
 
 /* ---- Форма добавления ---- */
 .sheet-bg{position:fixed;inset:0;background:rgba(8,10,16,.5);display:flex;align-items:flex-end;z-index:10;visibility:hidden;opacity:0;transition:opacity .2s,visibility .2s}
@@ -98,7 +109,7 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
 .save{width:100%;height:54px;border:0;border-radius:16px;background:var(--pos);color:#fff;font-weight:600;font-size:17px}
 .save:disabled{opacity:.4;cursor:default}
 
-.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:14px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+.toast{position:fixed;left:50%;bottom:calc(128px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:14px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -128,7 +139,14 @@ h2{margin:0 0 14px;font-size:18px;font-weight:600}
   <section class="block" id="list"></section>
 </main>
 
-<button class="add" id="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Добавить</button>
+<div class="dock">
+  <div class="pv" id="pv" hidden></div>
+  <div class="qbar">
+    <button class="plus" id="fab" aria-label="Открыть полную форму"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <input id="q" type="text" placeholder="Кофе 250 вчера" enterkeyhint="done" autocomplete="off" aria-label="Быстрый ввод операции">
+    <button class="go" id="go" disabled aria-label="Добавить"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="sheet-bg" id="bg">
@@ -306,7 +324,7 @@ function render(animate) {
 
   // Операции по дням
   if (!list.length) {
-    $('list').innerHTML = '<div class="empty"><p>В этом месяце пока ничего нет.</p><p class="sub">Нажми «Добавить», чтобы записать первую операцию.</p></div>';
+    $('list').innerHTML = '<div class="empty"><p>В этом месяце пока ничего нет.</p><p class="sub">Напиши внизу, например: «кофе 250».</p></div>';
     return;
   }
   let html = '<h2>Операции</h2>';
@@ -340,6 +358,7 @@ function setType(t) {
   renderChips();
 }
 function openSheet() {
+  $('q').blur();
   $('amount').value = ''; $('note').value = ''; $('date').value = today();
   setType('e');
   $('bg').classList.add('open');
@@ -386,6 +405,118 @@ $('list').onclick = e => {
   };
   const msg = 'Удалить операцию «' + x.c + '» на ' + rub(x.a) + '?';
   if (inTg && tg.showConfirm) tg.showConfirm(msg, del); else del(confirm(msg));
+};
+
+// ---------- Быстрый ввод одной строкой ----------
+const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+// Слово совпадает по началу; «=» на конце значит точное слово
+const KW = {
+  e: [
+    ['Продукты', ['продукт','магнит','пятероч','перекрест','лента=','ашан','хлеб','молок','вкусвилл','дикси','самокат','магазин','овощ','фрукт','мяс']],
+    ['Транспорт', ['транспорт','такси','метро','автобус','проезд','бензин','маршрутк','электричк','заправк','тройк','трамва','каршеринг','парковк']],
+    ['Кафе', ['кофе','кафе','обед','ужин','завтрак','бургер','пицц','шаурм','макдон','мак=','kfc','кфс','ресторан','столов','перекус','доставк','суши','ролл','чай','вкусно']],
+    ['Жильё', ['жиль','аренд','квартир','жкх','коммунал','свет=','интернет','общаг','общежит','комнат']],
+    ['Развлечения', ['развлеч','кино','игр','steam','стим','подписк','netflix','бар=','клуб','концерт','боулинг','spotify','youtube','ютуб','пив']],
+    ['Одежда', ['одежд','футболк','кроссовк','куртк','джинс','кепк','обув','худи','штан']],
+    ['Здоровье', ['здоров','аптек','лекарств','врач','стоматолог','зуб','таблетк','анализ','больниц']],
+    ['Учёба', ['учеб','книг','курс','печат','ксерокс','канцеляр','универ','лекци','тетрад']]
+  ],
+  i: [
+    ['Зарплата', ['зарплат','аванс','зп=']],
+    ['Стипендия', ['стипенд']],
+    ['Подработка', ['подработ','смен','склад','халтур']],
+    ['Подарки', ['подарил']]
+  ]
+};
+const INCOME_TRIGGERS = ['получил','пришло=','пришли=','перевели'];
+const norm = s => s.toLowerCase().replace(/ё/g, 'е');
+const pad2 = n => String(n).padStart(2, '0');
+function addDays(ds, n) { const d = new Date(ds + 'T12:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function validDate(y, m, d) { const x = new Date(y, m - 1, d); return x.getFullYear() === y && x.getMonth() === m - 1 && x.getDate() === d; }
+const hit = (words, kw) => kw.endsWith('=') ? words.includes(kw.slice(0, -1)) : words.some(w => w.startsWith(kw));
+
+// «Кофе 250 вчера», «+18 500 смена», «такси 1,5к 12.10» -> { a, t, c, d, n }
+function parse(raw) {
+  let s = raw.trim();
+  let t = /^\+/.test(s) ? 'i' : 'e';
+  s = s.replace(/^\+\s*/, '');
+  const T = today(), Y = Number(T.slice(0, 4));
+  let d = T;
+  const take = (re, ok) => { const m = s.match(re); if (m && (!ok || ok(m))) { s = s.replace(re, ' '); return m; } return null; };
+
+  let m;
+  if (take(/(^|\s)позавчера(?=\s|$)/i)) d = addDays(T, -2);
+  else if (take(/(^|\s)вчера(?=\s|$)/i)) d = addDays(T, -1);
+  else if (take(/(^|\s)сегодня(?=\s|$)/i)) d = T;
+  else if ((m = take(/(^|\s)(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)(?=\s|$)/i,
+      x => validDate(Y, MONTHS.indexOf(x[3].toLowerCase()) + 1, Number(x[2]))))) {
+    d = Y + '-' + pad2(MONTHS.indexOf(m[3].toLowerCase()) + 1) + '-' + pad2(Number(m[2]));
+  } else if ((m = take(/(^|\s)(\d{1,2})[./](\d{2})(?:[./](\d{4}|\d{2}))?(?=\s|$)/,
+      x => validDate(x[4] ? (x[4].length === 2 ? 2000 + Number(x[4]) : Number(x[4])) : Y, Number(x[3]), Number(x[2]))))) {
+    const yy = m[4] ? (m[4].length === 2 ? 2000 + Number(m[4]) : Number(m[4])) : Y;
+    d = yy + '-' + m[3] + '-' + pad2(Number(m[2]));
+  }
+
+  s = s.replace(/(\d)\s*(?:₽|руб(?:лей|ля)?\.?|р\.?)(?![а-яёa-z])/gi, '$1 ');
+  let a = 0;
+  const am = s.match(/(\d{1,3}(?:[ \u00A0]\d{3})+|\d+)(?:[.,](\d{1,2}))?\s*(тыс\.?|к|k)?(?![а-яёa-z\d])/i);
+  if (am) {
+    a = parseFloat(am[1].replace(/[ \u00A0]/g, '') + (am[2] ? '.' + am[2] : ''));
+    if (am[3]) a *= 1000;
+    a = Math.round(a * 100) / 100;
+    s = s.replace(am[0], ' ');
+  }
+
+  const words = norm(s).split(/[^a-zа-я0-9]+/).filter(Boolean);
+  if (t === 'e' && (KW.i.some(([, kws]) => kws.some(k => hit(words, k))) || INCOME_TRIGGERS.some(k => hit(words, k)))) t = 'i';
+  let c = 'Другое';
+  for (const [name, kws] of KW[t]) if (kws.some(k => hit(words, k))) { c = name; break; }
+
+  let n = s.replace(/#/g, '').replace(/\s+/g, ' ').trim();
+  if (norm(n) === norm(c)) n = '';
+  n = (n.charAt(0).toUpperCase() + n.slice(1)).slice(0, 60);
+  return { a, t, c, d, n };
+}
+
+let qt = null, qc = null; // ручные правки типа и категории
+function quickState() {
+  const raw = $('q').value;
+  if (!raw.trim()) return null;
+  const p = parse(raw);
+  const t = qt || p.t;
+  const c = qc && CATS[t].some(x => x[1] === qc) ? qc : (t === p.t ? p.c : 'Другое');
+  return { ...p, t, c };
+}
+function renderQuick() {
+  const q = quickState(), pv = $('pv');
+  $('go').disabled = !(q && q.a > 0);
+  if (!q) { pv.hidden = true; pv.innerHTML = ''; return; }
+  pv.hidden = false;
+  pv.innerHTML =
+    '<button class="pc" data-k="t">' + (q.t === 'e' ? '− Расход' : '+ Доход') + '</button>' +
+    '<button class="pc" data-k="c">' + icon(q.t, q.c) + ' ' + esc(q.c) + '</button>' +
+    (q.a > 0 ? '<span class="pc">' + rub(q.a) + '</span>' : '<span class="pc warn">Добавь сумму</span>') +
+    (q.d !== today() ? '<span class="pc">' + dayLabel(q.d) + '</span>' : '');
+}
+function quickSubmit() {
+  const q = quickState();
+  if (!q || !(q.a > 0)) return;
+  tx.push({ i: Date.now(), t: q.t, a: q.a, c: q.c, d: q.d, n: q.n });
+  month = q.d.slice(0, 7);
+  persist(month);
+  $('q').value = ''; qt = qc = null; renderQuick(); $('q').blur();
+  buzz('success'); render(true); toast('Добавлено');
+}
+$('q').addEventListener('input', () => { if (!$('q').value.trim()) qt = qc = null; renderQuick(); });
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); quickSubmit(); } });
+$('go').onclick = quickSubmit;
+// Нажатие на плашку меняет тип или переключает категорию по кругу
+$('pv').onclick = e => {
+  const b = e.target.closest('.pc'); if (!b || !b.dataset.k) return;
+  const q = quickState(); if (!q) return;
+  if (b.dataset.k === 't') { qt = q.t === 'e' ? 'i' : 'e'; qc = null; }
+  else { const list = CATS[q.t], i = list.findIndex(x => x[1] === q.c); qc = list[(i + 1) % list.length][1]; }
+  renderQuick();
 };
 
 load().then(() => render(true));
