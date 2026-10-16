@@ -179,6 +179,26 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 .crow:first-child{border-top:0}
 .crow button{border:0;background:var(--field);color:var(--warn);width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1}
 .cadd{display:grid;grid-template-columns:3.6rem 1fr;gap:10px;margin-top:8px}
+
+.lb{grid-column:2/-1;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--hint);margin-top:-2px}
+.lb .tr{flex:1;height:6px;border-radius:3px;background:var(--field);overflow:hidden}
+.lb .tr i{display:block;height:100%;border-radius:3px;background:var(--green)}
+.lb.warn .tr i{background:#F59F00}.lb.over{color:var(--warn)}.lb.over .tr i{background:var(--warn)}
+.crow .lim{width:6.2rem;padding:8px 10px;margin-right:8px;text-align:right;font-size:14px}
+.crow .cr{display:flex;align-items:center}
+.save.del{background:transparent;color:var(--warn);margin-top:8px;box-shadow:none;border:1px solid var(--line)}
+.debt{padding:12px 0;border-top:1px solid var(--line)}
+.debt:first-child{border-top:0}
+.debt .dh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
+.debt .dh button{border:0;background:var(--field);color:var(--warn);width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;flex:none}
+.debt .dm{color:var(--hint);font-size:13px;margin:2px 0 8px;font-variant-numeric:tabular-nums}
+.debt .tr{height:8px;border-radius:4px;background:var(--field);overflow:hidden}
+.debt .tr i{display:block;height:100%;border-radius:4px;background:var(--green)}
+.debt .pay{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
+.debt .pay .fi{padding:10px 12px}
+.debt .pay button{border:0;border-radius:14px;background:var(--pos);color:#fff;font-weight:600;padding:0 16px}
+.dadd{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.dadd .fi:first-child{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -234,6 +254,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
       <input id="note" type="text" placeholder="Заметка" maxlength="60" aria-label="Заметка">
     </div>
     <button class="save" id="save" disabled>Добавить расход</button>
+    <button class="save del" id="delBtn" type="button" hidden>Удалить операцию</button>
   </div>
 </div>
 
@@ -244,6 +265,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
     <button class="dr-item" data-go="home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Главная</button>
     <button class="dr-item" data-go="charts"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Графики</button>
     <button class="dr-item" data-go="cats"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Категории</button>
+    <button class="dr-item" data-go="debts"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M16 7.5c-.8-1.2-2.3-2-4-2-2.3 0-4 1.2-4 3s1.5 2.5 4 3 4 1.2 4 3-1.7 3-4 3c-1.8 0-3.3-.8-4-2"/></svg>Долги</button>
     <button class="dr-item" data-go="budget"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11H4zM4 8l2-4h12l2 4M15 13.5h2"/></svg>Бюджет и платежи</button>
     <button class="dr-item" data-go="imp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></svg>Импорт из файла</button>
     <button class="dr-item" data-go="exp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 20h14"/></svg>Скопировать копию</button>
@@ -275,6 +297,22 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
       <input class="fi" id="cName" type="text" placeholder="Название" maxlength="30" aria-label="Название категории" autocomplete="off">
     </div>
     <button class="save" id="cAdd" style="margin-top:14px">Добавить</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="bg5">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Долги">
+    <div class="grab"></div>
+    <h2 class="sh">Долги</h2>
+    <p class="hintp" id="dSum"></p>
+    <div id="dList"></div>
+    <label class="fl">Новый долг</label>
+    <div class="dadd">
+      <input class="fi" id="dName" type="text" placeholder="Кому должен" maxlength="30" aria-label="Кому должен" autocomplete="off">
+      <input class="fi" id="dTotal" type="text" inputmode="decimal" placeholder="Сумма долга" aria-label="Сумма долга" autocomplete="off">
+      <input class="fi" id="dPaid" type="text" inputmode="decimal" placeholder="Уже вернул" aria-label="Уже вернул" autocomplete="off">
+    </div>
+    <button class="save" id="dAdd" style="margin-top:14px">Добавить долг</button>
   </div>
 </div>
 
@@ -326,7 +364,7 @@ let month = today().slice(0, 7);
 let type = 'e';
 let cat = null;
 let heroColor = POS;
-let cfg = { cur: '₽', start: 0, days: [], reserve: 0, pays: [], set: false, cats: { e: [], i: [] } };
+let cfg = { cur: '₽', start: 0, days: [], reserve: 0, pays: [], set: false, cats: { e: [], i: [] }, limits: {}, debts: [] };
 cfg.cur = defaultCur();
 
 function today() { return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
@@ -472,7 +510,7 @@ function render(animate) {
       rows.map(([c, v]) => '<i style="flex:' + v + ';background:' + colorOf('e', c) + '"></i>').join('') + '</div><ul class="legend">' +
       rows.map(([c, v]) => {
         const p = v / exp * 100;
-        return '<li><span class="sw" style="background:' + colorOf('e', c) + '"></span><span>' + esc(c) + '</span><span class="lv">' + rub(v) + '</span><span class="lp">' + (p < 1 ? '<1' : Math.round(p)) + '%</span></li>';
+        return '<li><span class="sw" style="background:' + colorOf('e', c) + '"></span><span>' + esc(c) + '</span><span class="lv">' + rub(v) + '</span><span class="lp">' + (p < 1 ? '<1' : Math.round(p)) + '%</span>' + limBar(c, v) + '</li>';
       }).join('') + '</ul></div>';
   } else { st.hidden = true; st.innerHTML = ''; }
 
@@ -494,7 +532,7 @@ function render(animate) {
     }
     html += '</div>';
   }
-  $('list').innerHTML = html + '<p class="foot">Нажми на операцию, чтобы удалить.</p>';
+  $('list').innerHTML = html + '<p class="foot">Нажми на операцию, чтобы изменить или удалить.</p>';
 }
 
 // ---------- Форма ----------
@@ -508,11 +546,12 @@ function setType(t) {
   type = t; cat = null;
   $('tE').setAttribute('aria-pressed', t === 'e'); $('tI').setAttribute('aria-pressed', t === 'i');
   $('amountBox').classList.toggle('inc', t === 'i');
-  $('save').textContent = t === 'e' ? 'Добавить расход' : 'Добавить доход';
+  $('save').textContent = editId ? 'Сохранить' : (t === 'e' ? 'Добавить расход' : 'Добавить доход');
   renderChips();
 }
+let editId = null;
 function openSheet() {
-  $('q').blur();
+  $('q').blur(); editId = null; $('delBtn').hidden = true;
   $('amount').value = ''; $('note').value = ''; $('date').value = today();
   setType('e');
   $('bg').classList.add('open');
@@ -533,10 +572,22 @@ $('save').onclick = () => {
   const a = Math.round(parseAmount() * 100) / 100;
   if (!(a > 0) || !cat) return;
   const d = $('date').value || today();
-  tx.push({ i: Date.now(), t: type, a, c: cat, d, n: $('note').value.trim() });
+  const n = $('note').value.trim();
+  if (editId) {
+    const x = tx.find(r => r.i === editId);
+    if (x) {
+      const old = x.d.slice(0, 7);
+      Object.assign(x, { t: type, a, c: cat, d, n });
+      persist(old); if (old !== d.slice(0, 7)) persist(d.slice(0, 7));
+    }
+    month = d.slice(0, 7); editId = null;
+    buzz('success'); closeSheet(); render(true); toast('Сохранено');
+    return;
+  }
+  tx.push({ i: Date.now(), t: type, a, c: cat, d, n });
   month = d.slice(0, 7);
   persist(month);
-  buzz('success'); closeSheet(); render(true); toast('Добавлено');
+  buzz('success'); closeSheet(); render(true); toast('Добавлено'); limitNote(type, cat, month);
 };
 $('prev').onclick = () => shift(-1);
 $('next').onclick = () => shift(1);
@@ -547,18 +598,28 @@ function shift(k) {
   render(true);
 }
 
-// Удаление по нажатию на операцию
+// Нажатие на операцию открывает её для правки
 $('list').onclick = e => {
   const el = e.target.closest('.op'); if (!el) return;
-  const id = Number(el.dataset.id);
-  const x = tx.find(t => t.i === id); if (!x) return;
+  const x = tx.find(r => r.i === Number(el.dataset.id)); if (!x) return;
+  $('q').blur();
+  editId = x.i;
+  setType(x.t); cat = x.c;
+  if (!CATS[x.t].some(c => c[1] === x.c)) CATS[x.t].splice(Math.max(0, CATS[x.t].length - 1), 0, ['🏷️', x.c]);
+  renderChips();
+  $('amount').value = String(x.a).replace('.', ','); $('date').value = x.d; $('note').value = x.n || '';
+  $('save').textContent = 'Сохранить'; $('delBtn').hidden = false; check();
+  $('bg').classList.add('open');
+};
+$('delBtn').onclick = () => {
+  const id = editId, x = tx.find(r => r.i === id); if (!x) return;
   const del = ok => {
     if (!ok) return;
-    tx = tx.filter(t => t.i !== id);
-    persist(x.d.slice(0, 7)); buzz('warning'); render(true); toast('Удалено');
+    tx = tx.filter(r => r.i !== id); editId = null;
+    persist(x.d.slice(0, 7)); closeSheet(); buzz('warning'); render(true); toast('Удалено');
   };
   const msg = 'Удалить операцию «' + x.c + '» на ' + rub(x.a) + '?';
-  if (inTg && tg.showConfirm) tg.showConfirm(msg, del); else del(confirm(msg));
+  if (inTg && tg.showConfirm) tg.showConfirm(msg, del); else del(true);
 };
 
 // ---------- Быстрый ввод одной строкой ----------
@@ -663,7 +724,7 @@ function quickSubmit() {
   month = q.d.slice(0, 7);
   persist(month);
   $('q').value = ''; qt = qc = null; renderQuick(); $('q').blur();
-  buzz('success'); render(true); toast('Добавлено');
+  buzz('success'); render(true); toast('Добавлено'); limitNote(q.t, q.c, month);
 }
 $('q').addEventListener('input', () => { if (!$('q').value.trim()) qt = qc = null; renderQuick(); });
 $('q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); quickSubmit(); } });
@@ -825,6 +886,78 @@ $('dExp').onclick = async () => {
 };
 
 
+
+// ---------- Лимиты по категориям ----------
+function limOf(c) { return (cfg.limits && Number(cfg.limits[c])) || 0; }
+function limBar(c, spent) {
+  const L = limOf(c); if (!L) return '';
+  const r = spent / L, cls = r > 1 ? ' over' : r > .8 ? ' warn' : '';
+  const txt = r > 1 ? 'Перебор ' + rub(spent - L) : 'Осталось ' + rub(L - spent) + ' из ' + rub(L);
+  return '<span class="lb' + cls + '"><span class="tr"><i style="width:' + Math.min(100, Math.round(r * 100)) + '%"></i></span><span>' + txt + '</span></span>';
+}
+function limitNote(t, c, m) {
+  const L = limOf(c); if (t !== 'e' || !L) return;
+  const s = sum(tx.filter(x => x.t === 'e' && x.c === c && x.d.startsWith(m)), 'e');
+  if (s > L) setTimeout(() => { toast('Лимит «' + c + '» превышен на ' + rub(s - L)); buzz('warning'); }, 900);
+  else if (s > L * .8) setTimeout(() => toast('«' + c + '»: осталось ' + rub(L - s)), 900);
+}
+
+// ---------- Долги ----------
+function debtCat() {
+  const f = CATS.e.find(x => /^(дд|долг)/i.test(x[1]));
+  if (f) return f[1];
+  if (!cfg.cats) cfg.cats = { e: [], i: [] };
+  cfg.cats.e.push(['🤝', 'Долги']); applyCats(); return 'Долги';
+}
+function renderDebts() {
+  const L = cfg.debts || [];
+  const left = L.reduce((s, d) => s + Math.max(0, d.a - d.p), 0);
+  $('dSum').textContent = L.length ? 'Осталось вернуть: ' + rub(left) : 'Пока долгов нет.';
+  const box = $('dList'); box.textContent = '';
+  L.forEach((d, i) => {
+    const el = document.createElement('div'); el.className = 'debt';
+    const done = d.p >= d.a;
+    const h = document.createElement('div'); h.className = 'dh';
+    const nm = document.createElement('span'); nm.textContent = d.n + (done ? ' ✓' : ''); h.appendChild(nm);
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.dataset.del = i; x.setAttribute('aria-label', 'Удалить долг'); h.appendChild(x);
+    const m = document.createElement('div'); m.className = 'dm';
+    m.textContent = done ? 'Возвращено полностью: ' + rub(d.a) : 'Вернул ' + rub(d.p) + ' из ' + rub(d.a) + ' · осталось ' + rub(d.a - d.p);
+    const tr = document.createElement('div'); tr.className = 'tr';
+    const bar = document.createElement('i'); bar.style.width = Math.min(100, Math.round(d.p / d.a * 100)) + '%'; tr.appendChild(bar);
+    el.append(h, m, tr);
+    if (!done) {
+      const pay = document.createElement('div'); pay.className = 'pay';
+      const inp = document.createElement('input'); inp.className = 'fi'; inp.type = 'text'; inp.inputMode = 'decimal'; inp.placeholder = 'Сколько вернул'; inp.dataset.i = i; inp.setAttribute('aria-label', 'Сумма платежа по долгу ' + d.n);
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Внести'; b.dataset.pay = i;
+      pay.append(inp, b); el.appendChild(pay);
+    }
+    box.appendChild(el);
+  });
+}
+function openDebts() { renderDebts(); $('dName').value = ''; $('dTotal').value = ''; $('dPaid').value = ''; $('bg5').classList.add('open'); }
+$('dAdd').onclick = () => {
+  const n = $('dName').value.trim().slice(0, 30), a = numIn($('dTotal').value), p = numIn($('dPaid').value) || 0;
+  if (!n || !(a > 0)) { toast('Укажи, кому должен и сумму'); return; }
+  if (!cfg.debts) cfg.debts = [];
+  if (cfg.debts.length >= 15) { toast('Слишком много долгов'); return; }
+  cfg.debts.push({ n, a: Math.round(a * 100) / 100, p: Math.min(a, Math.max(0, Math.round(p * 100) / 100)) });
+  saveCfg(); renderDebts(); $('dName').value = ''; $('dTotal').value = ''; $('dPaid').value = ''; buzz('success'); toast('Добавлено');
+};
+$('dList').onclick = e => {
+  const del = e.target.closest('[data-del]'), pay = e.target.closest('[data-pay]');
+  if (del) { cfg.debts.splice(Number(del.dataset.del), 1); saveCfg(); renderDebts(); return; }
+  if (!pay) return;
+  const i = Number(pay.dataset.pay), d = cfg.debts[i];
+  const a = numIn($('dList').querySelector('input[data-i="' + i + '"]').value);
+  if (!(a > 0)) { toast('Введи сумму'); return; }
+  const v = Math.min(a, d.a - d.p);
+  d.p = Math.round((d.p + v) * 100) / 100;
+  const c = debtCat(), day = today();
+  tx.push({ i: Date.now(), t: 'e', a: v, c, d: day, n: 'Долг: ' + d.n });
+  persist(day.slice(0, 7)); saveCfg(); render(false); renderDebts(); buzz('success'); toast('Платёж записан в расходы');
+};
+$('bg5').onclick = e => { if (e.target === $('bg5')) $('bg5').classList.remove('open'); };
+
 // ---------- Меню ----------
 const MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 function openDrawer() {
@@ -862,10 +995,17 @@ function renderCats() {
     const custom = ((cfg.cats && cfg.cats[tt]) || []).map(x => x[1]);
     for (const [e, n] of CATS[tt]) {
       const row = document.createElement('div'); row.className = 'crow';
-      const sp = document.createElement('span'); sp.textContent = e + ' ' + n; row.appendChild(sp);
+      const sp = document.createElement('span'); sp.textContent = e + ' ' + n;
+      const right = document.createElement('div'); right.className = 'cr';
+      if (tt === 'e') {
+        const li = document.createElement('input'); li.className = 'fi lim'; li.type = 'text'; li.inputMode = 'decimal';
+        li.placeholder = 'Лимит'; li.value = limOf(n) ? String(limOf(n)).replace('.', ',') : ''; li.dataset.n = n; li.setAttribute('aria-label', 'Лимит на месяц: ' + n);
+        right.appendChild(li);
+      }
+      row.append(sp, right);
       if (custom.includes(n)) {
         const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Удалить ' + n);
-        b.dataset.t = tt; b.dataset.n = n; row.appendChild(b);
+        b.dataset.t = tt; b.dataset.n = n; right.appendChild(b);
       }
       box.appendChild(row);
     }
@@ -889,6 +1029,7 @@ $('drBg').onclick = e => {
   const g = b.dataset.go;
   if (g === 'charts') openCharts();
   else if (g === 'cats') openCats();
+  else if (g === 'debts') openDebts();
   else if (g === 'budget') openBudget();
   else if (g === 'imp') $('dImp').click();
   else if (g === 'exp') $('dExp').click();
@@ -898,6 +1039,13 @@ $('bg4').onclick = e => { if (e.target === $('bg4')) $('bg4').classList.remove('
 $('cType').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; ctype = b.dataset.t; $('cType').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
 $('cAdd').onclick = addCat;
 $('cName').addEventListener('keydown', e => { if (e.key === 'Enter') addCat(); });
+$('catE').addEventListener('change', e => {
+  const li = e.target.closest('input.lim'); if (!li) return;
+  const v = numIn(li.value);
+  if (!cfg.limits) cfg.limits = {};
+  if (v > 0) cfg.limits[li.dataset.n] = v; else delete cfg.limits[li.dataset.n];
+  saveCfg(); render(false); toast(v > 0 ? 'Лимит сохранён' : 'Лимит убран');
+});
 const catBox = e => {
   const b = e.target.closest('button[data-n]'); if (!b) return;
   const tt = b.dataset.t, n = b.dataset.n;
@@ -906,7 +1054,7 @@ const catBox = e => {
   saveCfg(); renderCats(); render(false); toast('Удалено. Старые операции остались');
 };
 $('catE').onclick = catBox; $('catI').onclick = catBox;
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); $('bg3').classList.remove('open'); $('bg4').classList.remove('open'); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); $('bg3').classList.remove('open'); $('bg4').classList.remove('open'); $('bg5').classList.remove('open'); } });
 
 load().then(() => { applyCats(); render(true); });
 </script>
