@@ -258,7 +258,7 @@ let month = today().slice(0, 7);
 let type = 'e';
 let cat = null;
 let heroColor = POS;
-let cfg = { cur: '₽', start: 0, days: [], reserve: 0, pays: [], set: false };
+let cfg = { cur: '₽', start: 0, days: [], reserve: 0, pays: [], set: false, cats: { e: [], i: [] } };
 cfg.cur = defaultCur();
 
 function today() { return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
@@ -270,7 +270,17 @@ const signed = n => (n < 0 ? '−' : n > 0 ? '+' : '') + rub(n);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sum = (l, t) => l.filter(x => x.t === t).reduce((s, x) => s + x.a, 0);
 const icon = (t, c) => (CATS[t].find(x => x[1] === c) || ['📦'])[0];
-const colorOf = (t, c) => t === 'i' ? '#12B886' : (EC[c] || '#868E96');
+const PAL = ['#FF8787','#69DB7C','#74C0FC','#B197FC','#FFD43B','#63E6BE','#F783AC','#A9E34B','#4DABF7','#FFA94D','#E599F7','#3BC9DB'];
+const colorOf = (t, c) => {
+  if (t === 'i') return '#12B886';
+  if (EC[c]) return EC[c];
+  let h = 0; for (const ch of c) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return PAL[h % PAL.length];
+};
+function applyCats() {
+  for (const t of ['e', 'i']) for (const [e, n] of ((cfg.cats && cfg.cats[t]) || []))
+    if (!CATS[t].some(x => x[1] === n)) CATS[t].splice(Math.max(0, CATS[t].length - 1), 0, [e, n]);
+}
 const rgba = (h, a) => { const n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; };
 const buzz = k => { try { tg && tg.HapticFeedback.notificationOccurred(k); } catch (e) {} };
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -699,6 +709,11 @@ function importTx(text) {
   try { data = JSON.parse(text); } catch (e) { toast('Не получилось прочитать файл'); return; }
   const list = Array.isArray(data) ? data : (data && Array.isArray(data.tx) ? data.tx : null);
   if (!list) { toast('В файле нет операций'); return; }
+  if (!cfg.cats) cfg.cats = { e: [], i: [] };
+  const known = (tt, n) => CATS[tt].some(x => x[1] === n) || cfg.cats[tt].some(x => x[1] === n);
+  const ci = data && !Array.isArray(data) && data.cats;
+  if (ci) for (const tt of ['e', 'i']) for (const [e, n] of (ci[tt] || []).slice(0, 40))
+    if (typeof n === 'string' && n && !known(tt, n) && cfg.cats[tt].length < 40) cfg.cats[tt].push([String(e || '🏷️').slice(0, 4), n.slice(0, 30)]);
   const key = x => [x.t, Math.round(x.a * 100), x.c, x.d, x.n || ''].join('|');
   const seen = new Set(tx.map(key));
   let id = Date.now(), added = 0;
@@ -708,10 +723,11 @@ function importTx(text) {
     const a = Number(r.a);
     if (!(a > 0) || a > 1e12 || !/^\d{4}-\d{2}-\d{2}$/.test(r.d || '')) continue;
     const x = { i: ++id, t: r.t, a: Math.round(a * 100) / 100, c: String(r.c || 'Другое').slice(0, 30), d: r.d, n: String(r.n || '').slice(0, 60) };
+    if (!known(x.t, x.c) && cfg.cats[x.t].length < 40) cfg.cats[x.t].push(['🏷️', x.c]);
     if (seen.has(key(x))) continue;
     seen.add(key(x)); tx.push(x); months.add(x.d.slice(0, 7)); added++;
   }
-  months.forEach(persist);
+  months.forEach(persist); applyCats(); saveCfg();
   closeBudget(); render(false);
   toast(added ? 'Добавлено операций: ' + added : 'Новых операций нет');
   if (added) buzz('success');
@@ -736,7 +752,7 @@ $('dExp').onclick = async () => {
   }
 };
 
-load().then(() => render(true));
+load().then(() => { applyCats(); render(true); });
 </script>
 </body>
 </html>
