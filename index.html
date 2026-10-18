@@ -38,6 +38,11 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--body);padding-bottom:calc(150px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer}
+svg{display:block}
+.mnav button,.menu,.plus,.go,.crow button,.pay button{padding:0}
+.crow button{display:grid;place-items:center;flex:none}
+.ic{line-height:1;overflow:hidden;font-family:-apple-system,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+.ic>*{display:block;line-height:1}
 :focus-visible{outline:3px solid #8FA0FF;outline-offset:2px}
 
 /* Фон: мягкие цветные пятна. При минусе меняют оттенок на тёплый */
