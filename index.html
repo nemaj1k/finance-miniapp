@@ -169,6 +169,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 .dr-item{display:flex;align-items:center;gap:16px;width:100%;border:0;background:transparent;color:var(--ink);padding:14px 20px;font-size:17px;font-weight:500;text-align:left}
 .dr-item:active{background:var(--field)}
 .dr-item svg{flex:none;opacity:.8}
+.dr-warn{color:var(--warn)}
 .dr-foot{margin-top:auto;padding:14px 20px 0;color:var(--hint);font-size:13px}
 .mrow{display:grid;grid-template-columns:5.2rem 1fr;gap:4px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
 .mrow:first-child{border-top:0}
@@ -288,6 +289,8 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
     <button class="dr-item" data-go="budget"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11H4zM4 8l2-4h12l2 4M15 13.5h2"/></svg>Бюджет и платежи</button>
     <button class="dr-item" data-go="imp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></svg>Импорт из файла</button>
     <button class="dr-item" data-go="exp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 20h14"/></svg>Скопировать копию</button>
+    <button class="dr-item dr-warn" data-go="delimp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Удалить импортированное</button>
+    <button class="dr-item dr-warn" data-go="delall"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Удалить все операции</button>
     <div class="dr-foot" id="drFoot"></div>
   </nav>
 </div>
@@ -882,7 +885,7 @@ function importTx(text) {
     if (!r || (r.t !== 'e' && r.t !== 'i')) continue;
     const a = Number(r.a);
     if (!(a > 0) || a > 1e12 || !/^\d{4}-\d{2}-\d{2}$/.test(r.d || '')) continue;
-    const x = { i: ++id, t: r.t, a: Math.round(a * 100) / 100, c: String(r.c || 'Другое').slice(0, 30), d: r.d, n: String(r.n || '').slice(0, 60) };
+    const x = { s: 1, i: ++id, t: r.t, a: Math.round(a * 100) / 100, c: String(r.c || 'Другое').slice(0, 30), d: r.d, n: String(r.n || '').slice(0, 60) };
     if (!known(x.t, x.c) && cfg.cats[x.t].length < 40) cfg.cats[x.t].push(['🏷️', x.c]);
     if (seen.has(key(x))) continue;
     seen.add(key(x)); tx.push(x); months.add(x.d.slice(0, 7)); added++;
@@ -985,6 +988,24 @@ $('dList').onclick = e => {
 };
 $('bg5').onclick = e => { if (e.target === $('bg5')) $('bg5').classList.remove('open'); };
 
+// ---------- Удаление данных ----------
+let armed = '', armT;
+function confirmAct(key, msg, fn) {
+  if (inTg && tg.showConfirm) { tg.showConfirm(msg, ok => { if (ok) fn(); }); return; }
+  if (armed === key) { armed = ''; clearTimeout(armT); fn(); return; }
+  armed = key; clearTimeout(armT); armT = setTimeout(() => { armed = ''; }, 4000);
+  toast('Нажми ещё раз, чтобы подтвердить');
+}
+function removeTx(pred, label) {
+  const gone = tx.filter(pred);
+  if (!gone.length) { toast('Нечего удалять'); return; }
+  const months = [...new Set(gone.map(x => x.d.slice(0, 7)))];
+  tx = tx.filter(x => !pred(x));
+  months.forEach(persist);
+  buzz('warning'); render(true); toast(label + ': ' + gone.length);
+  afterSync(label + ': ' + gone.length);
+}
+
 // ---------- Меню ----------
 const MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 function openDrawer() {
@@ -1053,14 +1074,16 @@ $('menu').onclick = openDrawer;
 $('drBg').onclick = e => {
   if (e.target === $('drBg')) return closeDrawer();
   const b = e.target.closest('[data-go]'); if (!b) return;
-  closeDrawer();
   const g = b.dataset.go;
+  if (g !== 'delimp' && g !== 'delall') closeDrawer();
   if (g === 'charts') openCharts();
   else if (g === 'cats') openCats();
   else if (g === 'debts') openDebts();
   else if (g === 'budget') openBudget();
   else if (g === 'imp') $('dImp').click();
   else if (g === 'exp') $('dExp').click();
+  else if (g === 'delimp') confirmAct('imp', 'Удалить все импортированные операции? Добавленные вручную останутся.', () => { closeDrawer(); removeTx(x => x.s, 'Удалено'); });
+  else if (g === 'delall') confirmAct('all', 'Удалить ВСЕ операции? Это нельзя отменить.', () => { closeDrawer(); removeTx(() => true, 'Удалено'); });
 };
 $('bg3').onclick = e => { if (e.target === $('bg3')) $('bg3').classList.remove('open'); };
 $('bg4').onclick = e => { if (e.target === $('bg4')) $('bg4').classList.remove('open'); };
