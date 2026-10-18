@@ -434,6 +434,7 @@ const csSet = (k, v) => new Promise(r => cs.setItem(k, v, () => r()));
 const csDel = keys => new Promise(r => keys.length ? cs.removeItems(keys, () => r()) : r());
 let queue = Promise.resolve();
 
+let needSync = false;
 async function load() {
   let local = [];
   try { local = JSON.parse(localStorage.getItem('tx') || '[]'); } catch (e) {}
@@ -444,12 +445,14 @@ async function load() {
   const months = idx ? JSON.parse(idx) : [];
   const out = [];
   for (const m of months) {
-    const n = Number((await csGet(['n:' + m]))['n:' + m] || 0);
-    const keys = Array.from({ length: n }, (_, k) => 'c:' + m + ':' + k);
+    const n = Number((await csGet(['n_' + m]))['n_' + m] || 0);
+    const keys = Array.from({ length: n }, (_, k) => 'c_' + m + '_' + k);
     const got = await csGet(keys);
     try { out.push(...JSON.parse(keys.map(k => got[k] || '').join('') || '[]')); } catch (e) {}
   }
   tx = out.length || months.length ? out : local;
+  // Данные, что остались только на устройстве, переносим в облако Telegram
+  if (!out.length && !months.length && local.length) { needSync = true; }
 }
 
 function persist(m) {
@@ -457,16 +460,16 @@ function persist(m) {
   if (!cs) return;
   queue = queue.then(async () => {
     const list = tx.filter(t => t.d.startsWith(m));
-    const old = Number((await csGet(['n:' + m]))['n:' + m] || 0);
+    const old = Number((await csGet(['n_' + m]))['n_' + m] || 0);
     const s = JSON.stringify(list);
     const parts = [];
     for (let i = 0; i < s.length; i += CH) parts.push(s.slice(i, i + CH));
     if (!list.length) parts.length = 0;
-    for (let k = 0; k < parts.length; k++) await csSet('c:' + m + ':' + k, parts[k]);
+    for (let k = 0; k < parts.length; k++) await csSet('c_' + m + '_' + k, parts[k]);
     const extra = [];
-    for (let k = parts.length; k < old; k++) extra.push('c:' + m + ':' + k);
+    for (let k = parts.length; k < old; k++) extra.push('c_' + m + '_' + k);
     await csDel(extra);
-    if (parts.length) await csSet('n:' + m, String(parts.length)); else await csDel(['n:' + m]);
+    if (parts.length) await csSet('n_' + m, String(parts.length)); else await csDel(['n_' + m]);
     const months = [...new Set(tx.map(t => t.d.slice(0, 7)))];
     await csSet('idx', JSON.stringify(months));
   }).catch(() => {});
@@ -1156,7 +1159,7 @@ function renderOnb() {
 }
 function startOnb() { if (!onbNeeded()) return; onbCur = cfg.cur; onbStep = 0; $('onb').hidden = false; renderOnb(); }
 
-load().then(() => { applyCats(); const n = runAutoPays(); render(true); startOnb(); if (n) setTimeout(() => toast('Записано регулярных платежей: ' + n), 600); });
+load().then(() => { applyCats(); if (needSync) { [...new Set(tx.map(x => x.d.slice(0, 7)))].forEach(persist); saveCfg(); } const n = runAutoPays(); render(true); startOnb(); if (n) setTimeout(() => toast('Записано регулярных платежей: ' + n), 600); });
 </script>
 </body>
 </html>
