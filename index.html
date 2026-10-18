@@ -53,7 +53,7 @@ main .block{width:100%}
 .wrow .wn.off{color:var(--hint)}
 .wrow button{width:36px;height:36px;border:0;border-radius:50%;background:var(--field);display:grid;place-items:center;padding:0;flex:none}
 .wrow button:disabled{opacity:.3}
-.wrow .sw2{width:auto;padding:0 14px;border-radius:14px;font-size:13px;font-weight:600}
+.wrow .sw2{width:auto;min-width:68px;padding:0 14px;border-radius:14px;font-size:13px;font-weight:600}
 .wrow .sw2[aria-pressed="true"]{background:var(--grad);color:#fff}
 .plist{list-style:none;margin:0;padding:0}
 .plist li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
@@ -273,6 +273,8 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
   <section class="block" id="wLim" hidden></section>
   <section class="block" id="wDebt" hidden></section>
   <section class="block" id="wPay" hidden></section>
+  <section class="block" id="wGoal" hidden></section>
+  <section class="block" id="wDay" hidden></section>
   <section class="block" id="list"></section>
 </main>
 
@@ -363,6 +365,12 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
     <label class="fl">Виджеты на главном экране</label>
     <div id="lkW"></div>
     <p class="hintp">Включай нужное и меняй порядок стрелками.</p>
+    <label class="fl">Цель накопления</label>
+    <div class="cadd" style="grid-template-columns:1fr 7.5rem">
+      <input class="fi" id="gName" type="text" placeholder="На что копим" maxlength="30" aria-label="Название цели" autocomplete="off">
+      <input class="fi" id="gSum" type="text" inputmode="decimal" placeholder="Сумма" aria-label="Сумма цели" autocomplete="off">
+    </div>
+    <p class="hintp">Прогресс считается по твоему текущему остатку. Включи виджет «Цель накопления» выше.</p>
   </div>
 </div>
 
@@ -1118,8 +1126,8 @@ function renderCats() {
   }
 }
 // ---------- Оформление и виджеты ----------
-const WD = [['today', 'Можно тратить в день', 'today'], ['limits', 'Лимиты по категориям', 'wLim'], ['stats', 'Куда ушло', 'stats'], ['debts', 'Долги', 'wDebt'], ['pays', 'Ближайшие платежи', 'wPay'], ['list', 'Операции', 'list']];
-const WOFF = ['limits', 'debts', 'pays'];
+const WD = [['today', 'Можно тратить в день', 'today'], ['limits', 'Лимиты по категориям', 'wLim'], ['stats', 'Куда ушло', 'stats'], ['debts', 'Долги', 'wDebt'], ['pays', 'Ближайшие платежи', 'wPay'], ['goal', 'Цель накопления', 'wGoal'], ['dayc', 'Расходы по дням', 'wDay'], ['list', 'Операции', 'list']];
+const WOFF = ['limits', 'debts', 'pays', 'goal', 'dayc'];
 function widgets() {
   const ws = (cfg.widgets || []).filter(w => WD.some(x => x[0] === w.k));
   WD.forEach(x => { if (!ws.some(w => w.k === x[0])) ws.push({ k: x[0], on: !WOFF.includes(x[0]) }); });
@@ -1149,6 +1157,24 @@ function renderExtra() {
     de.innerHTML = '<h2>Долги</h2><div class="sbox">' + D.slice(0, 4).map(d =>
       '<div class="debt"><div class="dh"><span>' + esc(d.n) + '</span></div><div class="dm">Осталось ' + rub(d.a - d.p) + ' из ' + rub(d.a) + '</div><div class="tr"><i style="width:' + Math.round(d.p / d.a * 100) + '%"></i></div></div>').join('') + '</div>';
   } else { de.hidden = true; de.innerHTML = ''; }
+  // Цель накопления
+  const ge = $('wGoal'), G = cfg.goal;
+  if (G && G.a > 0) {
+    const t = Math.max(0, total()), r = Math.min(1, t / G.a);
+    ge.hidden = false;
+    ge.innerHTML = '<h2>Цель</h2><div class="sbox"><div class="debt"><div class="dh"><span>' + esc(G.n || 'Накопить') + '</span><span>' + Math.round(r * 100) + '%</span></div><div class="dm">' +
+      (t >= G.a ? 'Цель достигнута: ' + rub(G.a) : 'Накоплено ' + rub(t) + ' из ' + rub(G.a) + ' · осталось ' + rub(G.a - t)) + '</div><div class="tr"><i style="width:' + Math.round(r * 100) + '%;background:var(--pos)"></i></div></div></div>';
+  } else { ge.hidden = true; ge.innerHTML = ''; }
+  // Расходы по дням
+  const dw = $('wDay'), [yy, mm] = month.split('-').map(Number), nd = new Date(yy, mm, 0).getDate(), per = Array(nd).fill(0);
+  mo.forEach(t => { per[Number(t.d.slice(8, 10)) - 1] += t.a; });
+  if (mo.length) {
+    const mx = Math.max(1, ...per);
+    dw.hidden = false;
+    dw.innerHTML = '<h2>Расходы по дням</h2><div class="sbox"><div class="days" role="img" aria-label="Расходы по дням месяца">' +
+      per.map(v => '<i style="height:' + Math.max(2, Math.round(v / mx * 100)) + '%;opacity:' + (v ? .9 : .2) + '"></i>').join('') +
+      '</div><div class="dm" style="display:flex;justify-content:space-between;margin:6px 0 0"><span>1</span><span>Максимум ' + rub(mx) + '</span><span>' + nd + '</span></div></div>';
+  } else { dw.hidden = true; dw.innerHTML = ''; }
   // Ближайшие платежи (14 дней)
   const pe = $('wPay'), rows = [], T = today();
   for (let i = 0; i <= 14; i++) { const ds = addDays(T, i); (cfg.pays || []).forEach(p => { if (isDue(ds, p.d)) rows.push([ds, p]); }); }
@@ -1181,7 +1207,7 @@ function renderLook() {
     '<button type="button" data-i="' + i + '" data-a="dn"' + (i === ws.length - 1 ? ' disabled' : '') + ' aria-label="Ниже"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>' +
     '<button type="button" class="sw2" data-i="' + i + '" data-a="tg" aria-pressed="' + w.on + '">' + (w.on ? 'Вкл' : 'Выкл') + '</button></div>').join('');
 }
-function openLook() { renderLook(); $('bg6').classList.add('open'); }
+function openLook() { renderLook(); $('gName').value = (cfg.goal && cfg.goal.n) || ''; $('gSum').value = cfg.goal && cfg.goal.a ? String(cfg.goal.a).replace('.', ',') : ''; $('bg6').classList.add('open'); }
 $('lkSw').onclick = e => {
   const b = e.target.closest('button[data-h]'); if (!b) return;
   cfg.hue = b.dataset.h === '' ? null : Number(b.dataset.h);
@@ -1196,6 +1222,14 @@ $('lkW').onclick = e => {
   else { const j = a === 'up' ? i - 1 : i + 1; [ws[i], ws[j]] = [ws[j], ws[i]]; }
   cfg.widgets = ws; saveCfg(); render(false); renderLook();
 };
+const saveGoal = () => {
+  const a = numIn($('gSum').value), had = !!cfg.goal;
+  cfg.goal = a > 0 ? { n: $('gName').value.trim().slice(0, 30), a } : null;
+  if (cfg.goal && !had) { const ws = widgets(); ws.find(x => x.k === 'goal').on = true; cfg.widgets = ws; }
+  saveCfg(); render(false);
+  if (cfg.goal && !had) { const gi = widgets().findIndex(x => x.k === 'goal'), t = $('lkW').querySelector('[data-i="' + gi + '"][data-a="tg"]'); if (t) { t.setAttribute('aria-pressed', 'true'); t.textContent = 'Вкл'; t.parentNode.firstChild.classList.remove('off'); } }
+};
+$('gName').onchange = saveGoal; $('gSum').onchange = saveGoal;
 $('bg6').onclick = e => { if (e.target === $('bg6')) $('bg6').classList.remove('open'); };
 
 function openCats() { renderCats(); $('cName').value = ''; $('cEmoji').value = ''; $('bg4').classList.add('open'); }
