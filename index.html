@@ -15,7 +15,7 @@
   --field:rgba(18,20,42,.06); --seg-on:rgba(255,255,255,.92);
   --shadow:0 10px 40px rgba(50,60,140,.12);
   --pos:#6C4DFF; --grad:linear-gradient(135deg,#4F6BFF 0%,#7A55FF 55%,#A862FF 100%); --glow:0 8px 24px rgba(122,86,255,.32); --green:#0B8F66; --warn:#D63518;
-  --o1:#4B5CFF; --o2:#9A6BFF; --o3:#3CC8FF; --oa:.5;
+  --o1:var(--ao1,#4B5CFF); --o2:var(--ao2,#9A6BFF); --o3:var(--ao3,#3CC8FF); --oa:.5;
   --display:'Unbounded','Golos Text',system-ui,sans-serif;
   --body:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   color-scheme:light;
@@ -39,6 +39,27 @@ body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--body);padding-bot
 button,input{font:inherit;color:inherit}
 button{cursor:pointer}
 svg{display:block}
+main{display:flex;flex-direction:column}
+main .block{width:100%}
+.lksw{display:flex;flex-wrap:wrap;gap:12px;margin:2px 0 14px}
+.lksw button{width:40px;height:40px;border-radius:50%;border:3px solid transparent;padding:0;box-shadow:0 0 0 1px var(--line)}
+.lksw button[aria-pressed="true"]{border-color:var(--bg);box-shadow:0 0 0 2.5px var(--ink)}
+.hue{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:6px;background:linear-gradient(90deg,hsl(0,85%,55%),hsl(60,85%,50%),hsl(120,70%,45%),hsl(180,80%,45%),hsl(240,85%,60%),hsl(300,80%,55%),hsl(360,85%,55%));margin:8px 0 6px;outline-offset:6px}
+.hue::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hue::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--ink)}
+.wrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.wrow:first-child{border-top:0}
+.wrow .wn{flex:1;font-weight:500}
+.wrow .wn.off{color:var(--hint)}
+.wrow button{width:36px;height:36px;border:0;border-radius:50%;background:var(--field);display:grid;place-items:center;padding:0;flex:none}
+.wrow button:disabled{opacity:.3}
+.wrow .sw2{width:auto;padding:0 14px;border-radius:14px;font-size:13px;font-weight:600}
+.wrow .sw2[aria-pressed="true"]{background:var(--grad);color:#fff}
+.plist{list-style:none;margin:0;padding:0}
+.plist li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
+.plist li:first-child{border-top:0}
+.plist small{color:var(--hint);font-size:13px}
+.plist b{font-weight:600;font-variant-numeric:tabular-nums}
 .mnav button,.menu,.plus,.go,.crow button,.pay button{padding:0}
 .crow button{display:grid;place-items:center;flex:none}
 .ic{line-height:1;overflow:hidden;font-family:-apple-system,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
@@ -249,6 +270,9 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 <main>
   <section class="block" id="today" hidden></section>
   <section class="block" id="stats" hidden></section>
+  <section class="block" id="wLim" hidden></section>
+  <section class="block" id="wDebt" hidden></section>
+  <section class="block" id="wPay" hidden></section>
   <section class="block" id="list"></section>
 </main>
 
@@ -293,6 +317,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
     <button class="dr-item" data-go="cats"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Категории</button>
     <button class="dr-item" data-go="debts"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M16 7.5c-.8-1.2-2.3-2-4-2-2.3 0-4 1.2-4 3s1.5 2.5 4 3 4 1.2 4 3-1.7 3-4 3c-1.8 0-3.3-.8-4-2"/></svg>Долги</button>
     <button class="dr-item" data-go="budget"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11H4zM4 8l2-4h12l2 4M15 13.5h2"/></svg>Бюджет и платежи</button>
+    <button class="dr-item" data-go="look"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18c1.4 0 2-1 2-2 0-1.2-.9-1.8-.9-2.8 0-.9.7-1.7 1.8-1.7H17a4 4 0 004-4c0-4-4-7.5-9-7.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></svg>Оформление и виджеты</button>
     <button class="dr-item" data-go="imp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></svg>Импорт из файла</button>
     <button class="dr-item" data-go="exp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 20h14"/></svg>Скопировать копию</button>
     <button class="dr-item dr-warn" data-go="delimp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg>Удалить импортированное</button>
@@ -325,6 +350,19 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
       <input class="fi" id="cName" type="text" placeholder="Название" maxlength="30" aria-label="Название категории" autocomplete="off">
     </div>
     <button class="save" id="cAdd" style="margin-top:14px">Добавить</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="bg6">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Оформление и виджеты">
+    <div class="grab"></div>
+    <h2 class="sh">Оформление</h2>
+    <label class="fl">Цвет приложения</label>
+    <div class="lksw" id="lkSw"></div>
+    <input class="hue" id="lkHue" type="range" min="0" max="359" step="1" aria-label="Свой оттенок">
+    <label class="fl">Виджеты на главном экране</label>
+    <div id="lkW"></div>
+    <p class="hintp">Включай нужное и меняй порядок стрелками.</p>
   </div>
 </div>
 
@@ -524,7 +562,8 @@ function setBalance(target, animate) {
   raf = requestAnimationFrame(step);
 }
 
-function render(animate) {
+function render(animate) { renderMain(animate); renderExtra(); applyWidgets(); applyAccent(); }
+function renderMain(animate) {
   const list = tx.filter(t => t.d.startsWith(month)).sort((a, b) => b.d.localeCompare(a.d) || b.i - a.i);
   const inc = sum(list, 'i'), exp = sum(list, 'e'), bal = inc - exp;
 
@@ -1078,6 +1117,87 @@ function renderCats() {
     }
   }
 }
+// ---------- Оформление и виджеты ----------
+const WD = [['today', 'Можно тратить в день', 'today'], ['limits', 'Лимиты по категориям', 'wLim'], ['stats', 'Куда ушло', 'stats'], ['debts', 'Долги', 'wDebt'], ['pays', 'Ближайшие платежи', 'wPay'], ['list', 'Операции', 'list']];
+const WOFF = ['limits', 'debts', 'pays'];
+function widgets() {
+  const ws = (cfg.widgets || []).filter(w => WD.some(x => x[0] === w.k));
+  WD.forEach(x => { if (!ws.some(w => w.k === x[0])) ws.push({ k: x[0], on: !WOFF.includes(x[0]) }); });
+  return ws;
+}
+function applyWidgets() {
+  widgets().forEach((w, i) => {
+    const el = $(WD.find(x => x[0] === w.k)[2]);
+    el.style.order = i;
+    if (!w.on) el.hidden = true;
+  });
+}
+function renderExtra() {
+  // Лимиты
+  const el = $('wLim'), mo = tx.filter(t => t.t === 'e' && t.d.startsWith(month)), by = {};
+  mo.forEach(x => by[x.c] = (by[x.c] || 0) + x.a);
+  const lims = Object.keys(cfg.limits || {}).filter(c => limOf(c)).map(c => [c, by[c] || 0]).sort((a, b) => b[1] / limOf(b[0]) - a[1] / limOf(a[0]));
+  if (lims.length) {
+    el.hidden = false;
+    el.innerHTML = '<h2>Лимиты</h2><div class="sbox"><ul class="legend" style="margin:0">' + lims.map(([c, v]) =>
+      '<li><span class="sw" style="background:' + colorOf('e', c) + '"></span><span>' + esc(c) + '</span><span class="lv">' + rub(v) + '</span><span class="lp">' + Math.round(v / limOf(c) * 100) + '%</span>' + limBar(c, v) + '</li>').join('') + '</ul></div>';
+  } else { el.hidden = true; el.innerHTML = ''; }
+  // Долги
+  const de = $('wDebt'), D = (cfg.debts || []).filter(d => d.p < d.a);
+  if (D.length) {
+    de.hidden = false;
+    de.innerHTML = '<h2>Долги</h2><div class="sbox">' + D.slice(0, 4).map(d =>
+      '<div class="debt"><div class="dh"><span>' + esc(d.n) + '</span></div><div class="dm">Осталось ' + rub(d.a - d.p) + ' из ' + rub(d.a) + '</div><div class="tr"><i style="width:' + Math.round(d.p / d.a * 100) + '%"></i></div></div>').join('') + '</div>';
+  } else { de.hidden = true; de.innerHTML = ''; }
+  // Ближайшие платежи (14 дней)
+  const pe = $('wPay'), rows = [], T = today();
+  for (let i = 0; i <= 14; i++) { const ds = addDays(T, i); (cfg.pays || []).forEach(p => { if (isDue(ds, p.d)) rows.push([ds, p]); }); }
+  if (rows.length) {
+    pe.hidden = false;
+    pe.innerHTML = '<h2>Ближайшие платежи</h2><div class="sbox"><ul class="plist">' + rows.slice(0, 6).map(([ds, p]) =>
+      '<li><span>' + esc(p.n) + '<br><small>' + (ds === T ? 'Сегодня' : new Date(ds + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })) + '</small></span><b>' + rub(p.a) + '</b></li>').join('') + '</ul></div>';
+  } else { pe.hidden = true; pe.innerHTML = ''; }
+}
+const HUES = [[null, 'Индиго'], [195, 'Океан'], [160, 'Мята'], [35, 'Закат'], [335, 'Роза'], [275, 'Фиолет']];
+const GRAD0 = 'linear-gradient(135deg,#4F6BFF 0%,#7A55FF 55%,#A862FF 100%)';
+const gradOf = h => h == null ? GRAD0 : 'linear-gradient(135deg,hsl(' + ((h + 340) % 360) + ',85%,50%) 0%,hsl(' + h + ',80%,50%) 55%,hsl(' + ((h + 25) % 360) + ',85%,54%) 100%)';
+function applyAccent() {
+  const r = document.documentElement.style, h = Number.isFinite(cfg.hue) ? cfg.hue : null;
+  if (h == null) { ['--grad', '--glow', '--pos', '--ao1', '--ao2', '--ao3'].forEach(n => r.removeProperty(n)); return; }
+  r.setProperty('--grad', gradOf(h));
+  r.setProperty('--glow', '0 8px 24px hsla(' + h + ',85%,52%,.34)');
+  r.setProperty('--pos', 'hsl(' + h + ',72%,50%)');
+  r.setProperty('--ao1', 'hsl(' + h + ',92%,62%)');
+  r.setProperty('--ao2', 'hsl(' + ((h + 35) % 360) + ',88%,66%)');
+  r.setProperty('--ao3', 'hsl(' + ((h + 320) % 360) + ',90%,64%)');
+}
+function renderLook() {
+  const h = Number.isFinite(cfg.hue) ? cfg.hue : null;
+  $('lkSw').innerHTML = HUES.map(([v, n]) => '<button type="button" data-h="' + (v == null ? '' : v) + '" style="background:' + gradOf(v) + '" aria-label="' + n + '" aria-pressed="' + (v === h) + '"></button>').join('');
+  $('lkHue').value = h == null ? 235 : h;
+  const ws = widgets();
+  $('lkW').innerHTML = ws.map((w, i) => '<div class="wrow"><span class="wn' + (w.on ? '' : ' off') + '">' + WD.find(x => x[0] === w.k)[1] + '</span>' +
+    '<button type="button" data-i="' + i + '" data-a="up"' + (i === 0 ? ' disabled' : '') + ' aria-label="Выше"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>' +
+    '<button type="button" data-i="' + i + '" data-a="dn"' + (i === ws.length - 1 ? ' disabled' : '') + ' aria-label="Ниже"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>' +
+    '<button type="button" class="sw2" data-i="' + i + '" data-a="tg" aria-pressed="' + w.on + '">' + (w.on ? 'Вкл' : 'Выкл') + '</button></div>').join('');
+}
+function openLook() { renderLook(); $('bg6').classList.add('open'); }
+$('lkSw').onclick = e => {
+  const b = e.target.closest('button[data-h]'); if (!b) return;
+  cfg.hue = b.dataset.h === '' ? null : Number(b.dataset.h);
+  saveCfg(); applyAccent(); renderLook(); try { tg && tg.HapticFeedback.selectionChanged(); } catch (x) {}
+};
+$('lkHue').oninput = e => { cfg.hue = Number(e.target.value); applyAccent(); $('lkSw').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false')); };
+$('lkHue').onchange = () => { saveCfg(); renderLook(); };
+$('lkW').onclick = e => {
+  const b = e.target.closest('button[data-i]'); if (!b || b.disabled) return;
+  const ws = widgets(), i = Number(b.dataset.i), a = b.dataset.a;
+  if (a === 'tg') ws[i].on = !ws[i].on;
+  else { const j = a === 'up' ? i - 1 : i + 1; [ws[i], ws[j]] = [ws[j], ws[i]]; }
+  cfg.widgets = ws; saveCfg(); render(false); renderLook();
+};
+$('bg6').onclick = e => { if (e.target === $('bg6')) $('bg6').classList.remove('open'); };
+
 function openCats() { renderCats(); $('cName').value = ''; $('cEmoji').value = ''; $('bg4').classList.add('open'); }
 function addCat() {
   const n = $('cName').value.trim().slice(0, 30), e = ($('cEmoji').value.trim() || '🏷️').slice(0, 4);
@@ -1098,6 +1218,7 @@ $('drBg').onclick = e => {
   else if (g === 'cats') openCats();
   else if (g === 'debts') openDebts();
   else if (g === 'budget') openBudget();
+  else if (g === 'look') openLook();
   else if (g === 'imp') $('dImp').click();
   else if (g === 'exp') $('dExp').click();
   else if (g === 'delimp') confirmAct('imp', 'Удалить все импортированные операции? Добавленные вручную останутся.', () => { closeDrawer(); removeTx(x => x.s, 'Удалено'); });
