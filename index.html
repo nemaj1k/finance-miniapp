@@ -42,13 +42,15 @@ button{cursor:pointer}
 
 /* Фон: мягкие цветные пятна. При минусе меняют оттенок на тёплый */
 .orbs{position:fixed;inset:0;overflow:hidden;z-index:-1;pointer-events:none}
-.orbs i{position:absolute;border-radius:50%;filter:blur(70px);opacity:var(--oa);transition:background-color .8s ease}
+.orbs{opacity:var(--oa);background:radial-gradient(circle 280px at 0% 4%,var(--o1),transparent 72%),radial-gradient(circle 260px at 100% 30%,var(--o2),transparent 72%),radial-gradient(circle 300px at 35% 100%,var(--o3),transparent 72%)}
+.orbs i{display:none}
 .orbs i:nth-child(1){width:300px;height:300px;left:-90px;top:-70px;background:var(--o1)}
 .orbs i:nth-child(2){width:260px;height:260px;right:-110px;top:170px;background:var(--o2)}
 .orbs i:nth-child(3){width:290px;height:290px;left:15%;bottom:-130px;background:var(--o3)}
 
 /* Стеклянные панели */
-.hero,.tcard,.sbox,.grp,.qbar,.pc{background:var(--glass);border:1px solid var(--stroke);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:var(--shadow)}
+.hero,.tcard,.sbox,.grp,.qbar,.pc{background:var(--glass);border:1px solid var(--stroke);box-shadow:var(--shadow)}
+.qbar{-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
 
 /* ---- Шапка с балансом ---- */
 .hero{position:relative;overflow:hidden;width:calc(100% - 32px);max-width:520px;margin:14px auto 0;padding:16px 18px 24px;border-radius:32px}
@@ -286,7 +288,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
     <button class="dr-item" data-go="budget"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11H4zM4 8l2-4h12l2 4M15 13.5h2"/></svg>Бюджет и платежи</button>
     <button class="dr-item" data-go="imp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></svg>Импорт из файла</button>
     <button class="dr-item" data-go="exp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 20h14"/></svg>Скопировать копию</button>
-    <div class="dr-foot">Данные хранятся в твоём Telegram-аккаунте</div>
+    <div class="dr-foot" id="drFoot"></div>
   </nav>
 </div>
 
@@ -428,10 +430,13 @@ else { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', app
 
 // ---------- Хранилище: Telegram CloudStorage (по месяцам, кусками) + зеркало в localStorage ----------
 const cs = inTg && tg.CloudStorage;
-const CH = 2500;
-const csGet = keys => new Promise(r => cs.getItems(keys, (e, v) => r(e ? {} : v || {})));
-const csSet = (k, v) => new Promise(r => cs.setItem(k, v, () => r()));
-const csDel = keys => new Promise(r => keys.length ? cs.removeItems(keys, () => r()) : r());
+const CH = 1000; // с запасом: лимит 4096, кириллица может считаться по 2 байта
+let cloudErr = '';
+const csGet = keys => new Promise(r => cs.getItems(keys, (e, v) => { if (e) cloudErr = String(e).slice(0, 60); r(e ? {} : v || {}); }));
+const csSet = (k, v) => new Promise(r => cs.setItem(k, v, (e, ok) => { if (e || ok === false) cloudErr = String(e || 'не сохранено').slice(0, 60); r(); }));
+const csDel = keys => new Promise(r => keys.length ? cs.removeItems(keys, e => { if (e) cloudErr = String(e).slice(0, 60); r(); }) : r());
+const cloudStatus = () => !cs ? 'Сохранение только на этом устройстве' : cloudErr ? 'Облако Telegram: ошибка ' + cloudErr : 'Данные сохраняются в облаке Telegram';
+function afterSync(msg) { if (cs) queue.then(() => toast(cloudErr ? 'Не сохранилось в облаке: ' + cloudErr : msg)); }
 let queue = Promise.resolve();
 
 let needSync = false;
@@ -459,6 +464,7 @@ function persist(m) {
   try { localStorage.setItem('tx', JSON.stringify(tx)); } catch (e) {}
   if (!cs) return;
   queue = queue.then(async () => {
+    cloudErr = '';
     const list = tx.filter(t => t.d.startsWith(m));
     const old = Number((await csGet(['n_' + m]))['n_' + m] || 0);
     const s = JSON.stringify(list);
@@ -472,7 +478,7 @@ function persist(m) {
     if (parts.length) await csSet('n_' + m, String(parts.length)); else await csDel(['n_' + m]);
     const months = [...new Set(tx.map(t => t.d.slice(0, 7)))];
     await csSet('idx', JSON.stringify(months));
-  }).catch(() => {});
+  }).catch(e => { cloudErr = String((e && e.message) || e).slice(0, 60); });
 }
 
 // ---------- Отрисовка ----------
@@ -884,7 +890,7 @@ function importTx(text) {
   months.forEach(persist); applyCats(); if (added && !cfg.onb) { cfg.onb = true; hideOnb(); } saveCfg();
   closeBudget(); render(false);
   toast(added ? 'Добавлено операций: ' + added : 'Новых операций нет');
-  if (added) buzz('success');
+  if (added) { buzz('success'); afterSync('Сохранено в облаке Telegram'); }
 }
 $('dImp').onclick = () => $('dFile').click();
 $('dFile').onchange = e => {
@@ -985,6 +991,7 @@ function openDrawer() {
   $('q').blur();
   const tt = total();
   $('drBal').textContent = (tt < 0 ? '−' : '') + rub(tt);
+  $('drFoot').textContent = cloudStatus();
   $('drBg').classList.add('open');
 }
 function closeDrawer() { $('drBg').classList.remove('open'); }
