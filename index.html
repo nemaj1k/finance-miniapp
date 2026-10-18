@@ -157,6 +157,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
 
 .blrow{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
 .blrow .bl{margin:0}
+.bbtns{display:flex;gap:8px}
 .menu{width:40px;height:40px;border:1px solid var(--stroke);border-radius:50%;background:var(--field);display:grid;place-items:center;color:var(--ink)}
 .menu:active{background:var(--glass-hi)}
 .dr-bg{position:fixed;inset:0;background:rgba(10,12,30,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:20;visibility:hidden;opacity:0;transition:opacity .2s,visibility .2s}
@@ -231,7 +232,7 @@ h2{margin:0 0 12px 4px;font-size:18px;font-weight:600}
       <div class="mlabel" id="mlabel" aria-live="polite"></div>
       <button id="next" aria-label="Следующий месяц"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
-    <div class="blrow"><div class="bl">Баланс месяца</div><button class="menu" id="menu" aria-label="Меню"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button></div>
+    <div class="blrow"><div class="bl">Баланс месяца</div><div class="bbtns"><button class="menu" id="eye" aria-label="Скрыть баланс" aria-pressed="false"></button><button class="menu" id="menu" aria-label="Меню"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button></div></div>
     <div class="bal" id="bal"><span id="balNum">0</span><span class="cur" id="cur">₽</span></div>
     <div class="flow">
       <div><small>Доходы</small><b id="inc">+0&nbsp;₽</b></div>
@@ -501,6 +502,7 @@ function dayLabel(d) {
 let shown = 0, raf = 0;
 function setBalance(target, animate) {
   cancelAnimationFrame(raf);
+  if (cfg.hide) { $('balNum').textContent = '•••••'; $('bal').style.fontSize = '48px'; shown = target; return; }
   const txt = (target < 0 ? '−' : '') + num(target);
   const L = txt.length;
   $('bal').style.fontSize = (L <= 6 ? 48 : L <= 8 ? 42 : L <= 10 ? 34 : L <= 12 ? 28 : 22) + 'px';
@@ -523,8 +525,9 @@ function render(animate) {
 
   $('mlabel').textContent = monthLabel();
   applyCur(); renderToday();
-  $('inc').textContent = '+' + rub(inc);
-  $('exp').textContent = '−' + rub(exp);
+  $('inc').textContent = cfg.hide ? '••••' : '+' + rub(inc);
+  $('exp').textContent = cfg.hide ? '••••' : '−' + rub(exp);
+  paintEye();
   document.documentElement.dataset.neg = bal < 0 ? '1' : '0';
   paintChrome();
   setBalance(bal, animate);
@@ -794,6 +797,15 @@ function budget() {
   const free = Math.round((total() - pay - cfg.reserve) * 100) / 100;
   return { free, per: free / n, n, date: next, pay, cnt };
 }
+const EYE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.5 6.6A16.5 16.5 0 002 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+function paintEye() {
+  const b = $('eye');
+  b.innerHTML = cfg.hide ? EYE_OFF : EYE;
+  b.setAttribute('aria-pressed', cfg.hide ? 'true' : 'false');
+  b.setAttribute('aria-label', cfg.hide ? 'Показать баланс' : 'Скрыть баланс');
+}
+$('eye').onclick = () => { cfg.hide = !cfg.hide; saveCfg(); render(false); try { tg && tg.HapticFeedback.selectionChanged(); } catch (e) {} };
 function applyCur() { $('glyph').textContent = cfg.cur; $('cur').textContent = cfg.cur; $('rubSym').textContent = cfg.cur; }
 function renderToday() {
   const el = $('today');
@@ -808,9 +820,9 @@ function renderToday() {
   }
   const low = b.free < 0;
   const dt = new Date(b.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  el.innerHTML = '<div class="tcard"><div><div class="tl">Можно тратить в день</div><div class="tv' + (low ? ' low' : '') + '">' + rub(low ? 0 : Math.floor(b.per)) + '</div><div class="ts">' +
-    (low ? 'До ' + dt + ' не хватает ' + rub(-b.free) : 'Свободно до ' + dt + ': ' + rub(b.free)) +
-    (b.cnt ? ' · учтено ' + b.cnt + ' ' + plural(b.cnt, ['платёж', 'платежа', 'платежей']) + ' на ' + rub(b.pay) : '') +
+  el.innerHTML = '<div class="tcard"><div><div class="tl">Можно тратить в день</div><div class="tv' + (low ? ' low' : '') + '">' + (cfg.hide ? '••••' : rub(low ? 0 : Math.floor(b.per))) + '</div><div class="ts">' +
+    (cfg.hide ? 'Сумма скрыта' : (low ? 'До ' + dt + ' не хватает ' + rub(-b.free) : 'Свободно до ' + dt + ': ' + rub(b.free)) +
+    (b.cnt ? ' · учтено ' + b.cnt + ' ' + plural(b.cnt, ['платёж', 'платежа', 'платежей']) + ' на ' + rub(b.pay) : '')) +
     '</div></div><button class="tbtn" data-act="setup">Изменить</button></div>';
 }
 function saveCfg() {
@@ -1012,7 +1024,7 @@ const MN = ['Январь','Февраль','Март','Апрель','Май','
 function openDrawer() {
   $('q').blur();
   const tt = total();
-  $('drBal').textContent = (tt < 0 ? '−' : '') + rub(tt);
+  $('drBal').textContent = cfg.hide ? '••••' : (tt < 0 ? '−' : '') + rub(tt);
   $('drFoot').textContent = cloudStatus();
   $('drBg').classList.add('open');
 }
